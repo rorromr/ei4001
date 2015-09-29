@@ -1,6 +1,6 @@
 #define DIR_PIN 3
 
-#include "rs485.h"
+#include <SerialDXL.h>
 
 uint8_t data;      // a variable to read incoming serial data into
 

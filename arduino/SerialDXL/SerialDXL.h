@@ -1,5 +1,5 @@
-#ifndef RS485_DXL_h
-#define RS485_DXL_h
+#ifndef SerialDXL_h
+#define SerialDXL_h
 
 #include <avr/io.h>
 #include <util/atomic.h>
