@@ -11,5 +11,3 @@ else
   current_dir=${PWD}
   ln -s "${current_dir}/SerialDXL" ~/Arduino/libraries/SerialDXL
 fi
-
-
