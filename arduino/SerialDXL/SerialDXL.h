@@ -2,6 +2,7 @@
 #define SerialDXL_h
 
 #include <avr/io.h>
+#include <avr/eeprom.h>
 #include <util/atomic.h>
 #include <Arduino.h>
 
@@ -60,11 +61,12 @@ class MMap {
     }
 
     inline __attribute__((always_inline))
-    uint8_t setEEPROM(uint8_t address, uint8_t value)
+    void setEEPROM(uint8_t address, uint8_t value)
     {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-        return 0;
+        eeprom_write_byte ( (uint8_t*) address, value);
+        (*mmap_[address].value)=value;
       }
     }
 
@@ -73,19 +75,19 @@ class MMap {
     {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-        return 0;
+        return eeprom_read_byte( (uint8_t*) address );
       }
     }
 
-    uint8_t set(uint8_t address, uint8_t value)
+    void set(uint8_t address, uint8_t value)
     {
       // Check for size
-      if (address > N) return 0;
+      if (address > N) return;
       // Check for access
-      if (~(mmap_[address].param & MMAP_RW)) return 0;
+      if (~(mmap_[address].param & MMAP_RW)) return;
 
 
-      return mmap_[address].param & MMAP_RAM ? 
+      mmap_[address].param & MMAP_RAM ? 
         (*mmap_[address].value)=value : setEEPROM(address, value);
     }
 
