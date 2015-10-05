@@ -6,20 +6,23 @@
 #include <util/atomic.h>
 #include <Arduino.h>
 
-#define DIR_PIN 3
+/**
+ * @class DeviceDXL
+ * @brief Virtual class for Device with DXL.
+ */
+class DeviceDXL {
+  public:
+    virtual void initRAM() {}
 
-static inline __attribute__((always_inline))
-void setTX()
-{
-  digitalWrite(DIR_PIN,HIGH);
-}
+    virtual void initEEPROM() {}
 
-static inline __attribute__((always_inline))
-void setRX()
-{
-  digitalWrite(DIR_PIN,LOW);
-}
+    virtual inline __attribute__((always_inline))
+    void setTX() {}
 
+    virtual inline __attribute__((always_inline))
+    void setRX() {}
+
+};
 
 // Memory map max size
 static const uint8_t MMAP_MAX_SIZE = 16;
@@ -50,7 +53,8 @@ typedef struct
  * @brief Memory mapping.
  */
 template<size_t N>
-class MMap {
+class MMap
+{
   public:
     MMap(mmap_entry_t *mmap)
     {
@@ -109,7 +113,8 @@ class MMap {
  * @class SerialDXL
  * @brief Serial port wrapper for DXL communication protocol.
  */
-class SerialDXL {
+class SerialDXL
+{
   public:
     SerialDXL()
     {

@@ -1,8 +1,6 @@
-#define DIR_PIN 3
-
 #include <SerialDXL.h>
 
-uint8_t data;      // a variable to read incoming serial data into
+uint8_t data;      // variable to read incoming serial data into
 
 uint8_t state = 0;
 uint8_t len = 0;
@@ -16,11 +14,55 @@ uint8_t finish = 0;
 
 uint8_t id = 30;
 
+class LedDXL: public DeviceDXL
+{
+  public:
+    LedDXL(const uint8_t dir_pin)
+    {
+      dir_pin_  = dir_pin;
+    }
+
+    void initRAM()
+    {
+      ;
+    }
+
+    void initEEPROM()
+    {
+      ;
+    }
+
+    inline __attribute__((always_inline))
+    void setTX()
+    {
+      digitalWrite(dir_pin_,HIGH);
+    }
+
+    inline __attribute__((always_inline))
+    void setRX()
+    {
+      digitalWrite(dir_pin_,LOW);
+    }
+
+  private:
+    uint8_t dir_pin_;
+  
+};
+
+mmap_entry_t led_mmap_entry[] = {
+  { &id, MMAP_EEPROM | MMAP_RW },
+  { &id, MMAP_EEPROM | MMAP_RW }
+};
+
+MMap<5> led_mmap(led_mmap_entry);
+
+LedDXL led(3);
+
 void setup() {
   // Serial communication:
   Serial.begin(9600);
   pinMode(10, OUTPUT);
-  setRX();
+  led.setRX();
 }
 
 void loop() {
