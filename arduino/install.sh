@@ -13,4 +13,3 @@ else
   ln -s "${current_dir}/encoder" ~/Arduino/libraries/encoder
 fi
 
-
