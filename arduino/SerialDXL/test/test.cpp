@@ -1,4 +1,6 @@
+#define DEBUG 1
 #include "../SerialDXL.h"
+
 
 uint8_t data;      // variable to read incoming serial data into
 
@@ -23,6 +25,7 @@ uint8_t id = 30;
 #define COMMAND 2
 #define STATE   3
 
+
 class LedDXL: public DeviceDXL
 {
   public:
@@ -40,10 +43,9 @@ class LedDXL: public DeviceDXL
       MMAP_ENTRY(mmap_field_[STATE], state_, MMAP_RAM | MMAP_R);             // Current state
       mmap_.setMMap(mmap_field_);
 
-      initRAM();
-
       // Config LED pin
       pinMode(led_pin_, OUTPUT);
+
     }
 
     void initRAM()
@@ -55,11 +57,14 @@ class LedDXL: public DeviceDXL
     void initEEPROM()
     {
       // Set default ID
-      mmap_.set(ID, 30);
+      mmap_.setEEPROM(ID, 15);
       // Set version
-      mmap_.set(VERSION, VERSION_LED_DXL);
-      Serial.println("VERSION OK");
-      delay(500);
+      mmap_.setEEPROM(VERSION, VERSION_LED_DXL);
+    }
+
+    void reset()
+    {
+      initEEPROM();
     }
 
     void proccessMsg(uint8_t msg)
@@ -104,6 +109,12 @@ void setup() {
   // Serial communication:
   Serial.begin(9600);
   led.setRX();
+  if (digitalRead(5)==HIGH)
+  {
+    DEBUG_PRINTLN("RESET!");
+    led.reset();
+  }
+  led.initRAM();
 }
 
 void loop() {

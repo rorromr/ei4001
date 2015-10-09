@@ -6,6 +6,14 @@
 #include <util/atomic.h>
 #include <Arduino.h>
 
+// Debug macros
+#if(DEBUG == 0)
+#define DEBUG_PRINT(...)
+#define DEBUG_PRINTLN(...)
+#else
+#define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
+#define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
+#endif
 /**
  * @class DeviceDXL
  * @brief Virtual class for Device with DXL.
@@ -27,7 +35,7 @@ class DeviceDXL {
 // Memory map max size
 static const uint8_t MMAP_MAX_SIZE = 16;
 
-// First bit
+// First bit LSB
 static const uint8_t MMAP_RW = 1;
 static const uint8_t MMAP_R = 0;
 
@@ -73,6 +81,7 @@ class MMap
     inline __attribute__((always_inline))
     uint8_t setEEPROM(uint8_t address, uint8_t value)
     {
+      DEBUG_PRINTLN("set eeprom");
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
         eeprom_write_byte ( (uint8_t*) address, value);
@@ -83,6 +92,7 @@ class MMap
     inline __attribute__((always_inline))
     uint8_t getEEPROM(uint8_t address)
     {
+      DEBUG_PRINTLN("get eeprom");
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
         return eeprom_read_byte( (uint8_t*) address );
@@ -92,11 +102,21 @@ class MMap
     void set(uint8_t address, uint8_t value)
     {
       // Check for size
-      if (address > N_) return;
+      DEBUG_PRINTLN("set");
+      if (address > N_)
+      {
+        DEBUG_PRINTLN("address error");
+        return;
+      }
       // Check for access
-      if (~(mmap_[address].param & MMAP_RW)) return;
+      if (!(mmap_[address].param & MMAP_RW))
+      {
+        DEBUG_PRINTLN(mmap_[address].param);
+        DEBUG_PRINTLN("read only address");
+        return;
+      }
 
-
+      
       mmap_[address].param & MMAP_RAM ? 
         (*mmap_[address].value)=value : setEEPROM(address, value);
     }
@@ -104,8 +124,12 @@ class MMap
     void setFromEEPROM(uint8_t address)
     {
       // Check for size
-      if (address > N_) return;
-
+      DEBUG_PRINTLN("set from epprom");
+      if (address > N_)
+      {
+        DEBUG_PRINTLN("address error");
+        return;
+      }
       uint8_t value = 0;
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
@@ -117,7 +141,12 @@ class MMap
     uint8_t get(uint8_t address)
     {
       // Check for size
-      if (address > N_) return 0;
+      DEBUG_PRINTLN("get");
+      if (address > N_)
+      {
+        DEBUG_PRINTLN("address error");
+        return 0;
+      }
       return mmap_[address].param & MMAP_RAM ? 
         (*mmap_[address].value) : getEEPROM(address);
     }
