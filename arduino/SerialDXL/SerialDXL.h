@@ -48,29 +48,35 @@ typedef struct
   uint8_t param;
 } mmap_entry_t;
 
+// Set MMAP entry macro
+#define MMAP_ENTRY(mmap, var, parameter) {(mmap).value = &(var); (mmap).param = (parameter);}
+
 /**
  * @class MMap
  * @brief Memory mapping.
  */
-template<size_t N>
 class MMap
 {
   public:
-    MMap(mmap_entry_t *mmap)
+    MMap(size_t N):
+    N_(N)
     {
       // Check size
-      if (N > MMAP_MAX_SIZE) badSize();
-      // 
+      if (N_ > MMAP_MAX_SIZE) badSize();
+    }
+
+    void setMMap(mmap_entry_t *mmap)
+    {
       mmap_ = mmap;
     }
 
     inline __attribute__((always_inline))
-    void setEEPROM(uint8_t address, uint8_t value)
+    uint8_t setEEPROM(uint8_t address, uint8_t value)
     {
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
         eeprom_write_byte ( (uint8_t*) address, value);
-        (*mmap_[address].value)=value;
+        return (*mmap_[address].value)=value;
       }
     }
 
@@ -86,7 +92,7 @@ class MMap
     void set(uint8_t address, uint8_t value)
     {
       // Check for size
-      if (address > N) return;
+      if (address > N_) return;
       // Check for access
       if (~(mmap_[address].param & MMAP_RW)) return;
 
@@ -95,10 +101,23 @@ class MMap
         (*mmap_[address].value)=value : setEEPROM(address, value);
     }
 
+    void setFromEEPROM(uint8_t address)
+    {
+      // Check for size
+      if (address > N_) return;
+
+      uint8_t value = 0;
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+      {
+        value = eeprom_read_byte( (uint8_t*) address );
+      }
+      (*mmap_[address].value)=value;
+    }
+
     uint8_t get(uint8_t address)
     {
       // Check for size
-      if (address > N) return 0;
+      if (address > N_) return 0;
       return mmap_[address].param & MMAP_RAM ? 
         (*mmap_[address].value) : getEEPROM(address);
     }
@@ -107,6 +126,7 @@ class MMap
   private:
     // Memory mapping with pointers to RAM and EEPROM data
     mmap_entry_t *mmap_;
+    const size_t N_;
 };
 
 /**
