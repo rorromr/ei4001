@@ -104,10 +104,12 @@ class LedDXL: public DeviceDXL
 
 
 LedDXL led(3, 10);
+SerialDXL<10,10> serialdxl;
 
 void setup() {
   // Serial communication:
   Serial.begin(9600);
+  serialdxl.begin(207);
   led.setRX();
   if (digitalRead(5)==HIGH)
   {

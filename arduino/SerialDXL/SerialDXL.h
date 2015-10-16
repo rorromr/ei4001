@@ -1,15 +1,13 @@
+/**
+ * @file
+ * @brief Dynamixel Device Library
+ */
 #ifndef SerialDXL_h
 #define SerialDXL_h
-
-#include <avr/eeprom.h>
-#include <avr/interrupt.h>
-#include <avr/io.h>
-#include <avr/sleep.h>
-#include <util/atomic.h>
-
-#include <Arduino.h>
-
-// Debug macros
+//------------------------------------------------------------------------------
+/**
+ * Debug macros
+ */
 #if(DEBUG == 0)
 #define DEBUG_PRINT(...)
 #define DEBUG_PRINTLN(...)
@@ -17,6 +15,14 @@
 #define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
 #define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
 #endif
+//------------------------------------------------------------------------------
+#include <avr/eeprom.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
+#include <avr/sleep.h>
+#include <util/atomic.h>
+#include <Arduino.h>
+//------------------------------------------------------------------------------
 /**
  * @class DeviceDXL
  * @brief Virtual class for Device with DXL.
@@ -34,34 +40,35 @@ class DeviceDXL {
     void setRX() {}
 
 };
-
-// Memory map max size
+//------------------------------------------------------------------------------
+/** Memory map max size */
 static const uint8_t MMAP_MAX_SIZE = 16;
-
-// First bit LSB
+/** First bit LSB */
 static const uint8_t MMAP_RW = 1;
 static const uint8_t MMAP_R = 0;
-
-// Second bit
+/** Second bit */
 static const uint8_t MMAP_RAM = 1 << 1;
 static const uint8_t MMAP_EEPROM = 0;
-
+//------------------------------------------------------------------------------
 /** Cause error message for bad Size.
  * @return Never returns since it is never called.
  */
 uint8_t badSize(void)
   __attribute__((error("MMAP size too large")));
-
-
+//------------------------------------------------------------------------------
+/**
+ * @class mmap_entry_t
+ * @brief Entry type for memory map.
+ */
 typedef struct
 {
   uint8_t *value;
   uint8_t param;
 } mmap_entry_t;
-
+//------------------------------------------------------------------------------
 // Set MMAP entry macro
 #define MMAP_ENTRY(mmap, var, parameter) {(mmap).value = &(var); (mmap).param = (parameter);}
-
+//------------------------------------------------------------------------------
 /**
  * @class MMap
  * @brief Memory mapping.
@@ -88,18 +95,20 @@ class MMap
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
         eeprom_write_byte ( (uint8_t*) address, value);
-        return (*mmap_[address].value)=value;
       }
+      return (*mmap_[address].value)=value;
     }
 
     inline __attribute__((always_inline))
     uint8_t getEEPROM(uint8_t address)
     {
       DEBUG_PRINTLN("get eeprom");
+      uint8_t read;
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-        return eeprom_read_byte( (uint8_t*) address );
+        read = eeprom_read_byte( (uint8_t*) address );
       }
+      return read;
     }
 
     void set(uint8_t address, uint8_t value)
@@ -160,21 +169,63 @@ class MMap
     mmap_entry_t *mmap_;
     const size_t N_;
 };
-
+//------------------------------------------------------------------------------
+/**
+ * @class SerialRingBuffer
+ * @brief Ring buffer for RX and TX data. Based on Bill Greiman Serial library
+ * (https://github.com/greiman/SerialPort).
+ */
+class SerialRingBuffer {
+ public:
+  /** Define type for buffer indices */
+  typedef uint8_t buf_size_t;
+  int available();
+  /** @return @c true if the ring buffer is empty else @c false. */
+  bool empty() {return head_ == tail_;}
+  void flush();
+  bool get(uint8_t* b);
+  buf_size_t get(uint8_t* b, buf_size_t n);
+  void init(uint8_t* b, buf_size_t s);
+  int peek();
+  bool put(uint8_t b);
+  buf_size_t put(const uint8_t* b, buf_size_t n);
+  buf_size_t put_P(PGM_P b, buf_size_t n);
+ private:
+  uint8_t* buf_;              /**< Pointer to start of buffer. */
+  volatile buf_size_t head_;  /**< Index to next empty location. */
+  volatile buf_size_t tail_;  /**< Index to last entry if head_ != tail_. */
+  buf_size_t size_;           /**< Size of the buffer. Capacity is size -1. */
+};
+//------------------------------------------------------------------------------
+/** RX ring buffers. */
+SerialRingBuffer rxRingBuf;
+/** TX ring buffers. */
+SerialRingBuffer txRingBuf;
+//------------------------------------------------------------------------------
 /**
  * @class SerialDXL
  * @brief Serial port wrapper for DXL communication protocol.
  */
 #define UBRR_VALUE(BAUDRATE) (((F_CPU / (BAUDRATE * 16UL))) - 1)
+#define RX_BUFFER_MAX 100
+#define TX_BUFFER_MAX 100
+/** Cause error message for RX buffer bad Size.
+ * @return Never returns since it is never called.
+ */
+uint8_t badRxBufSize(void)
+  __attribute__((error("RX buffer size too large or zero")));
 
+/** Cause error message for TX buffer bad Size.
+ * @return Never returns since it is never called.
+ */
+uint8_t badTxBufSize(void)
+  __attribute__((error("TX buffer size too large or zero")));
+
+
+template<size_t RxBufSize, size_t TxBufSize>
 class SerialDXL
 {
   public:
-    SerialDXL()
-    {
-      ;
-    }
-
     void begin(uint8_t baud)
     {
       // Set baudrate using Dynamixel relation
@@ -183,7 +234,7 @@ class SerialDXL
       /* Disable USART interrupts     
       RXCIE0 RX Complete interrupt enable
       TXCIE0 TX Complete interrupt enable
-      UDRIE0 USART Data register empty interrupt enable
+      UDRIE0 USART Data register empty interrupt enable (UDR0 Ready)
       RXEN0 RX Receiver enables
       TXEN0 TX Transmitter enable
       */
@@ -198,11 +249,12 @@ class SerialDXL
 
       // Enable USART interrupts
       UCSR0B |=  ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
-
     }
-
-
-
+  private:
+    // RX buffer with a capacity of RxBufSize.
+    uint8_t rxBuffer_[RxBufSize + 1];
+    // TX buffer with a capacity of TxBufSize.
+    uint8_t txBuffer_[TxBufSize + 1];
 };
 
 #endif
