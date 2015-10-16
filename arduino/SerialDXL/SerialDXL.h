@@ -1,9 +1,12 @@
 #ifndef SerialDXL_h
 #define SerialDXL_h
 
-#include <avr/io.h>
 #include <avr/eeprom.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
+#include <avr/sleep.h>
 #include <util/atomic.h>
+
 #include <Arduino.h>
 
 // Debug macros
@@ -162,6 +165,8 @@ class MMap
  * @class SerialDXL
  * @brief Serial port wrapper for DXL communication protocol.
  */
+#define UBRR_VALUE(BAUDRATE) (((F_CPU / (BAUDRATE * 16UL))) - 1)
+
 class SerialDXL
 {
   public:
@@ -169,6 +174,34 @@ class SerialDXL
     {
       ;
     }
+
+    void begin(uint8_t baud)
+    {
+      // Set baudrate using Dynamixel relation
+      uint16_t baud_setting = UBRR_VALUE(2000000/(baud+1));
+
+      /* Disable USART interrupts     
+      RXCIE0 RX Complete interrupt enable
+      TXCIE0 TX Complete interrupt enable
+      UDRIE0 USART Data register empty interrupt enable
+      RXEN0 RX Receiver enables
+      TXEN0 TX Transmitter enable
+      */
+      UCSR0B &=  ~((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
+
+      // Set baud rate
+      UBRR0H = (uint8_t)(baud_setting>>8);  // High bit
+      UBRR0L = (uint8_t)baud_setting;       // Low bit
+
+      // Set frame format to Dynamixel (8 data bits, no parity, 1 stop bit)
+      UCSR0C |= (1<<UCSZ01)|(1<<UCSZ00);
+
+      // Enable USART interrupts
+      UCSR0B |=  ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
+
+    }
+
+
 
 };
 
