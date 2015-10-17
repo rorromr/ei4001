@@ -1,5 +1,6 @@
-#define DEBUG 1
-#include "../SerialDXL.h"
+#define DEBUG 0
+#include <SerialDXL.h>
+#include <Arduino.h>
 
 
 uint8_t data;      // variable to read incoming serial data into
@@ -108,7 +109,6 @@ SerialDXL<10,10> serialdxl;
 
 void setup() {
   // Serial communication:
-  Serial.begin(9600);
   serialdxl.begin(207);
   led.setRX();
   if (digitalRead(5)==HIGH)
@@ -120,7 +120,7 @@ void setup() {
 }
 
 void loop() {
-  
+  /*
   if (Serial.available() > 0) {
     // Read serial
     data = (uint8_t) Serial.read();
@@ -172,7 +172,7 @@ void loop() {
         break;
     }
   }
-
+  */
   if (finish)
   {
     led.proccessMsg(parameters[0]);

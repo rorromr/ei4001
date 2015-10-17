@@ -12,16 +12,17 @@
 #define DEBUG_PRINT(...)
 #define DEBUG_PRINTLN(...)
 #else
-#define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
-#define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
+#define DEBUG_PRINT(...)
+#define DEBUG_PRINTLN(...)
 #endif
 //------------------------------------------------------------------------------
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <avr/sleep.h>
 #include <util/atomic.h>
-#include <Arduino.h>
+#include <string.h>
 //------------------------------------------------------------------------------
 /**
  * @class DeviceDXL
@@ -94,7 +95,7 @@ class MMap
       DEBUG_PRINTLN("set eeprom");
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-        eeprom_write_byte ( (uint8_t*) address, value);
+        eeprom_write_byte ( (uint8_t*)(uint16_t) address, value);
       }
       return (*mmap_[address].value)=value;
     }
@@ -106,7 +107,7 @@ class MMap
       uint8_t read;
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-        read = eeprom_read_byte( (uint8_t*) address );
+        read = eeprom_read_byte( (uint8_t*)(uint16_t) address );
       }
       return read;
     }
@@ -145,7 +146,7 @@ class MMap
       uint8_t value = 0;
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-        value = eeprom_read_byte( (uint8_t*) address );
+        value = eeprom_read_byte( (uint8_t*)(uint16_t) address );
       }
       (*mmap_[address].value)=value;
     }
@@ -189,7 +190,6 @@ class SerialRingBuffer {
   int peek();
   bool put(uint8_t b);
   buf_size_t put(const uint8_t* b, buf_size_t n);
-  buf_size_t put_P(PGM_P b, buf_size_t n);
  private:
   uint8_t* buf_;              /**< Pointer to start of buffer. */
   volatile buf_size_t head_;  /**< Index to next empty location. */
@@ -198,9 +198,9 @@ class SerialRingBuffer {
 };
 //------------------------------------------------------------------------------
 /** RX ring buffers. */
-SerialRingBuffer rxRingBuf;
+extern SerialRingBuffer rxRingBuf;
 /** TX ring buffers. */
-SerialRingBuffer txRingBuf;
+extern SerialRingBuffer txRingBuf;
 //------------------------------------------------------------------------------
 /**
  * @class SerialDXL
@@ -226,6 +226,16 @@ template<size_t RxBufSize, size_t TxBufSize>
 class SerialDXL
 {
   public:
+    SerialDXL()
+    {
+      // Check buffer sizes
+      if (RxBufSize > RX_BUFFER_MAX || !RxBufSize) badRxBufSize();
+      if (TxBufSize > TX_BUFFER_MAX || !TxBufSize) badTxBufSize();
+      // Init buffers
+      rxRingBuf.init(rxBuffer_, sizeof(rxBuffer_));
+      txRingBuf.init(txBuffer_, sizeof(txBuffer_));
+    }
+
     void begin(uint8_t baud)
     {
       // Set baudrate using Dynamixel relation
@@ -238,7 +248,7 @@ class SerialDXL
       RXEN0 RX Receiver enables
       TXEN0 TX Transmitter enable
       */
-      UCSR0B &=  ~((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
+      UCSR0B &= ~((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
 
       // Set baud rate
       UBRR0H = (uint8_t)(baud_setting>>8);  // High bit
@@ -248,13 +258,15 @@ class SerialDXL
       UCSR0C |= (1<<UCSZ01)|(1<<UCSZ00);
 
       // Enable USART interrupts
-      UCSR0B |=  ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
+      UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
     }
+
   private:
     // RX buffer with a capacity of RxBufSize.
     uint8_t rxBuffer_[RxBufSize + 1];
     // TX buffer with a capacity of TxBufSize.
     uint8_t txBuffer_[TxBufSize + 1];
 };
+
 
 #endif

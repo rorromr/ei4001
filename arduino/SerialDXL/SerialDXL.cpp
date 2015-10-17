@@ -129,37 +129,8 @@ SerialRingBuffer::buf_size_t
   return n;
 }
 //------------------------------------------------------------------------------
-/**
- * Put the maximum number of contiguous bytes into the ring buffer.
- * with one call to memcpy.
- *
- * @note This function must not be called with interrupts disabled.
- *
- * @param[in] b pointer to data.
- * @param[in] n number of bytes to transfer to the ring buffer.
- * @return number of bytes transferred.
- */
-SerialRingBuffer::buf_size_t SerialRingBuffer::put_P(PGM_P b, buf_size_t n) {
-  cli();
-  buf_size_t t = tail_;
-  sei();
-  buf_size_t space;  // space in ring buffer
-  buf_size_t h = head_;
-  if (h < t) {
-    space = t - h - 1;
-  } else {
-    space = size_ - h;
-    if (t == 0) space -= 1;
-  }
-  if (n > space) n = space;
-  memcpy_P(&buf_[h], b, n);
-  h += n;
-  head_ = h < size_ ? h : h - size_;
-  return n;
-}
-//------------------------------------------------------------------------------
-extern SerialRingBuffer rxRingBuf;
-extern SerialRingBuffer txRingBuf;
+SerialRingBuffer rxRingBuf;
+SerialRingBuffer txRingBuf;
 //------------------------------------------------------------------------------
 inline static void rx_isr() {
   uint8_t b = UDR0;
@@ -168,14 +139,4 @@ inline static void rx_isr() {
 
 ISR(USART_RX_vect) {
   rx_isr();
-}
-
-SerialDXL::SerialDXL()
-{
-  // Check buffer sizes
-  if (RxBufSize > RX_BUFFER_MAX || !RxBufSize) badRxBufSize();
-  if (TxBufSize > TX_BUFFER_MAX || !TxBufSize) badTxBufSize();
-  // Init buffers
-  rxRingBuf.init(rxBuffer_, sizeof(rxBuffer_));
-  txRingBuf.init(txBuffer_, sizeof(txBuffer_));
 }
