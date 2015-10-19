@@ -105,11 +105,11 @@ class LedDXL: public DeviceDXL
 
 
 LedDXL led(3, 10);
-SerialDXL<10,10> serialdxl(&led);
 
 void setup() {
   // Serial communication:
-  serialdxl.begin(207);
+  SerialDXL.init(207, &led);
+
   led.setRX();
   if (digitalRead(5)==HIGH)
   {
@@ -120,59 +120,7 @@ void setup() {
 }
 
 void loop() {
-  /*
-  if (Serial.available() > 0) {
-    // Read serial
-    data = (uint8_t) Serial.read();
-    finish = 0;
-    switch(state)
-    {
-      case 0: // 0xFF
-        if (data == 0xFF) state = 1;
-        break;
-        
-      case 1: // 0XFF
-        if (data == 0xFF) state = 2;
-        break;
-        
-      case 2: // ID
-        // Check error
-        if (data == 0xFF)
-        {
-          state = 0;
-          break;
-        }
-        
-        if (data == id)
-        {
-          state = 3;
-        }
-        break;
-        
-      case 3: // Length
-        len = data;
-        state = 4;
-        break;
-
-      case 4: // Instruction
-        instruction = data;
-        state = 5;
-        if (len <= 1) state = 6; else state = 5;                      
-        break;
-      
-      case 5: // Parameters
-        parameters[param_index++] = data;
-        if (param_index >= len-2) state = 6;
-        break;
-
-      case 6: // Checksum
-        state = 0;
-        param_index = 0;
-        finish = 1;
-        break;
-    }
-  }
-  */
+  
   if (finish)
   {
     led.proccessMsg(parameters[0]);

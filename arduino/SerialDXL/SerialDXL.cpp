@@ -132,8 +132,11 @@ SerialRingBuffer::buf_size_t
 SerialRingBuffer rxRingBuf;
 SerialRingBuffer txRingBuf;
 //------------------------------------------------------------------------------
+SerialDXL_<10> SerialDXL;
+
 inline static void rx_isr() {
   uint8_t b = UDR0;
+  SerialDXL.process(b);
   rxRingBuf.put(b);
 }
 

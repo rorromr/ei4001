@@ -210,42 +210,40 @@ extern SerialRingBuffer txRingBuf;
  * @brief Serial port wrapper for DXL communication protocol.
  */
 #define UBRR_VALUE(BAUDRATE) (((F_CPU / (BAUDRATE * 16UL))) - 1)
-#define RX_BUFFER_MAX 100
-#define TX_BUFFER_MAX 100
+#define MAX_MSG_LENGTH 100
 /** Cause error message for RX buffer bad Size.
  * @return Never returns since it is never called.
  */
-uint8_t badRxBufSize(void)
-  __attribute__((error("RX buffer size too large or zero")));
-
-/** Cause error message for TX buffer bad Size.
- * @return Never returns since it is never called.
- */
-uint8_t badTxBufSize(void)
-  __attribute__((error("TX buffer size too large or zero")));
+uint8_t badMsgBufLength(void)
+  __attribute__((error("Message buffer length too large or zero")));
 
 
-template<size_t RxBufSize, size_t TxBufSize>
-class SerialDXL
+template<size_t maxMsgLength>
+class SerialDXL_
 {
   public:
-    SerialDXL(DeviceDXL *device):
+    SerialDXL_():
       msgState_(0),
-      msgParamIdx_(0),
-      msgLen_(0) 
+      msgParamIdx_(2),
+      msgLen_(0),
+      msgFinish_(0),
+      error_()
     {
       // Check buffer sizes
-      if (RxBufSize > RX_BUFFER_MAX || !RxBufSize) badRxBufSize();
-      if (TxBufSize > TX_BUFFER_MAX || !TxBufSize) badTxBufSize();
-      // Init buffers
-      rxRingBuf.init(rxBuffer_, sizeof(rxBuffer_));
-      txRingBuf.init(txBuffer_, sizeof(txBuffer_));
-      // Set DeviceDXL
-      device_ = device;
+      if (maxMsgLength > MAX_MSG_LENGTH || !maxMsgLength) badMsgBufLength();
     }
 
-    void begin(uint8_t baud)
+    /**
+     * @brief Initialize SerialDXL. Set baudrate and target device.
+     * @details 
+     * 
+     * @param baud Baudrate using Dynamixel format.
+     * @param device Target device.
+     */
+    void init(uint8_t baud, DeviceDXL *device)
     {
+      // Set DeviceDXL
+      device_ = device;
       // Set baudrate using Dynamixel relation
       uint16_t baud_setting = UBRR_VALUE(2000000/(baud+1));
 
@@ -269,52 +267,56 @@ class SerialDXL
       UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
     }
 
-    void onRX(uint8_t data)
+    /**
+     * @brief Process data from Serial 
+     * @details Add data to buffers, this function is called using ISR
+     * 
+     * @param data Data from Serial port.
+     */
+    void process(uint8_t data)
     {
       switch(msgState_)
       {
         case 0: // 0xFF
-          if (data == 0xFF) msgState_ = 1;
+          msgState_ = data == 0xFF ? 1 : 0;
           break;
           
         case 1: // 0XFF
-          if (data == 0xFF) msgState_ = 2;
+          msgState_ = data == 0xFF ? 2 : 1;
           break;
           
         case 2: // ID
           // Check error
-          if (data == 0xFF)
-          {
-            msgState_ = 0;
-            break;
-          }
-          
-          if (data == device_->id_)
-          {
-            msgState_ = 3;
-          }
+          msgState_ = data == device_->id_ ? 3 : 0;
           break;
           
         case 3: // Length
           msgLen_ = data;
+          // Save length in the RX message buffer
+          rxMsgBuf_[0] = data;
           msgState_ = 4;
           break;
 
         case 4: // Instruction
-          //instruction = data;
-          msgState_ = 5;
-          if (msgLen_ <= 1) msgState_ = 6; else msgState_ = 5;                      
+          // Save instruction in the RX message buffer
+          rxMsgBuf_[1] = data;
+          // Check for short message
+          msgState_ = msgLen_ <= 2 ? 6 : 5;
           break;
         
         case 5: // Parameters
-          msgParam_[msgParamIdx_++] = data;
-          if (msgParamIdx_ >= msgLen_-2) msgState_ = 6;
+          rxMsgBuf_[msgParamIdx_++] = data;
+          // Check message length
+          msgState_ = msgParamIdx_ >= msgLen_ ? 6 : msgState_;
           break;
 
         case 6: // Checksum
+          // @TODO Checksum
+          rxMsgBuf_[msgParamIdx_] = data;
+          msgFinish_ = 1;
           msgState_ = 0;
-          msgParamIdx_ = 0;
-          //finish = 1;
+          msgParamIdx_ = 2;
+          msgLen_ = 0;
           break;
       }
     }
@@ -325,18 +327,20 @@ class SerialDXL
     DeviceDXL *device_;
     // Mesage reception state
     uint8_t msgState_;
-    uint8_t msgParam_[8]; 
     uint8_t msgParamIdx_;
     uint8_t msgLen_;
+    uint8_t msgFinish_;
 
     // Error state
     uint8_t error_;
 
-    // RX buffer with a capacity of RxBufSize.
-    uint8_t rxBuffer_[RxBufSize + 1];
-    // TX buffer with a capacity of TxBufSize.
-    uint8_t txBuffer_[TxBufSize + 1];
+    // RX buffer
+    uint8_t rxMsgBuf_[maxMsgLength];
+    // TX buffer
+    uint8_t txMsgBuf_[maxMsgLength];
 };
+
+extern SerialDXL_<10> SerialDXL;
 
 
 #endif
