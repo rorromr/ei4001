@@ -40,6 +40,9 @@ class DeviceDXL {
     virtual inline __attribute__((always_inline))
     void setRX() {}
 
+    // ID
+    uint8_t id_;
+
 };
 //------------------------------------------------------------------------------
 /** Memory map max size */
@@ -226,7 +229,10 @@ template<size_t RxBufSize, size_t TxBufSize>
 class SerialDXL
 {
   public:
-    SerialDXL()
+    SerialDXL(DeviceDXL *device):
+      msgState_(0),
+      msgParamIdx_(0),
+      msgLen_(0) 
     {
       // Check buffer sizes
       if (RxBufSize > RX_BUFFER_MAX || !RxBufSize) badRxBufSize();
@@ -234,6 +240,8 @@ class SerialDXL
       // Init buffers
       rxRingBuf.init(rxBuffer_, sizeof(rxBuffer_));
       txRingBuf.init(txBuffer_, sizeof(txBuffer_));
+      // Set DeviceDXL
+      device_ = device;
     }
 
     void begin(uint8_t baud)
@@ -242,11 +250,11 @@ class SerialDXL
       uint16_t baud_setting = UBRR_VALUE(2000000/(baud+1));
 
       /* Disable USART interrupts     
-      RXCIE0 RX Complete interrupt enable
-      TXCIE0 TX Complete interrupt enable
-      UDRIE0 USART Data register empty interrupt enable (UDR0 Ready)
-      RXEN0 RX Receiver enables
-      TXEN0 TX Transmitter enable
+      RXCIE0 | RX Complete interrupt enable
+      TXCIE0 | TX Complete interrupt enable
+      UDRIE0 | USART Data register empty interrupt enable (UDR0 Ready)
+      RXEN0  | RX Receiver enables
+      TXEN0  | TX Transmitter enable
       */
       UCSR0B &= ~((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
 
@@ -261,7 +269,69 @@ class SerialDXL
       UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
     }
 
+    void onRX(uint8_t data)
+    {
+      switch(msgState_)
+      {
+        case 0: // 0xFF
+          if (data == 0xFF) msgState_ = 1;
+          break;
+          
+        case 1: // 0XFF
+          if (data == 0xFF) msgState_ = 2;
+          break;
+          
+        case 2: // ID
+          // Check error
+          if (data == 0xFF)
+          {
+            msgState_ = 0;
+            break;
+          }
+          
+          if (data == device_->id_)
+          {
+            msgState_ = 3;
+          }
+          break;
+          
+        case 3: // Length
+          msgLen_ = data;
+          msgState_ = 4;
+          break;
+
+        case 4: // Instruction
+          //instruction = data;
+          msgState_ = 5;
+          if (msgLen_ <= 1) msgState_ = 6; else msgState_ = 5;                      
+          break;
+        
+        case 5: // Parameters
+          msgParam_[msgParamIdx_++] = data;
+          if (msgParamIdx_ >= msgLen_-2) msgState_ = 6;
+          break;
+
+        case 6: // Checksum
+          msgState_ = 0;
+          msgParamIdx_ = 0;
+          //finish = 1;
+          break;
+      }
+    }
+
+
   private:
+    // DeviceDXL
+    DeviceDXL *device_;
+    // Mesage reception state
+    uint8_t msgState_;
+    uint8_t msgParam_[8]; 
+    uint8_t msgParamIdx_;
+    uint8_t msgLen_;
+
+    // Error state
+    uint8_t error_;
+
     // RX buffer with a capacity of RxBufSize.
     uint8_t rxBuffer_[RxBufSize + 1];
     // TX buffer with a capacity of TxBufSize.

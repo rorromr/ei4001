@@ -95,7 +95,7 @@ class LedDXL: public DeviceDXL
     uint8_t eeprom_null_;
 
     // Fields
-    uint8_t id_, state_, command_;
+    uint8_t state_, command_;
 
     // Memory map
     mmap_entry_t mmap_field_[4];
@@ -105,7 +105,7 @@ class LedDXL: public DeviceDXL
 
 
 LedDXL led(3, 10);
-SerialDXL<10,10> serialdxl;
+SerialDXL<10,10> serialdxl(&led);
 
 void setup() {
   // Serial communication:
