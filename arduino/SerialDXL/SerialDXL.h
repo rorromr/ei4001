@@ -8,7 +8,7 @@
 /**
  * Debug macros
  */
-#if(DEBUG == 0)
+#ifdef DEBUG
 #define DEBUG_PRINT(...)
 #define DEBUG_PRINTLN(...)
 #else
@@ -175,35 +175,14 @@ class MMap
 };
 //------------------------------------------------------------------------------
 /**
- * @class SerialRingBuffer
- * @brief Ring buffer for RX and TX data. Based on Bill Greiman Serial library
- * (https://github.com/greiman/SerialPort).
+ * @class VirtualDeviceDXL
+ * @brief Virtual class for ISR.
  */
-class SerialRingBuffer {
- public:
-  /** Define type for buffer indices */
-  typedef uint8_t buf_size_t;
-  int available();
-  /** @return @c true if the ring buffer is empty else @c false. */
-  bool empty() {return head_ == tail_;}
-  void flush();
-  bool get(uint8_t* b);
-  buf_size_t get(uint8_t* b, buf_size_t n);
-  void init(uint8_t* b, buf_size_t s);
-  int peek();
-  bool put(uint8_t b);
-  buf_size_t put(const uint8_t* b, buf_size_t n);
- private:
-  uint8_t* buf_;              /**< Pointer to start of buffer. */
-  volatile buf_size_t head_;  /**< Index to next empty location. */
-  volatile buf_size_t tail_;  /**< Index to last entry if head_ != tail_. */
-  buf_size_t size_;           /**< Size of the buffer. Capacity is size -1. */
+class VirtualDeviceDXL {
+  public:
+    virtual void process(uint8_t data) {}
 };
-//------------------------------------------------------------------------------
-/** RX ring buffers. */
-extern SerialRingBuffer rxRingBuf;
-/** TX ring buffers. */
-extern SerialRingBuffer txRingBuf;
+extern VirtualDeviceDXL *SerialDXL_ISR;
 //------------------------------------------------------------------------------
 /**
  * @class SerialDXL
@@ -219,10 +198,10 @@ uint8_t badMsgBufLength(void)
 
 
 template<size_t maxMsgLength>
-class SerialDXL_
+class SerialDXL: public VirtualDeviceDXL
 {
   public:
-    SerialDXL_():
+    SerialDXL():
       msgState_(0),
       msgParamIdx_(2),
       msgLen_(0),
@@ -231,6 +210,7 @@ class SerialDXL_
     {
       // Check buffer sizes
       if (maxMsgLength > MAX_MSG_LENGTH || !maxMsgLength) badMsgBufLength();
+      SerialDXL_ISR = this;
     }
 
     /**
@@ -269,7 +249,7 @@ class SerialDXL_
 
     /**
      * @brief Process data from Serial 
-     * @details Add data to buffers, this function is called using ISR
+     * @details Add data to buffers, this function is called using ISR.
      * 
      * @param data Data from Serial port.
      */
@@ -321,6 +301,11 @@ class SerialDXL_
       }
     }
 
+    uint8_t* getMsg()
+    {
+      return (msgFinish_) ? rxMsgBuf_ : NULL;
+    }
+
 
   private:
     // DeviceDXL
@@ -340,7 +325,40 @@ class SerialDXL_
     uint8_t txMsgBuf_[maxMsgLength];
 };
 
-extern SerialDXL_<10> SerialDXL;
+
+
+
+//------------------------------------------------------------------------------
+/**
+ * @class SerialRingBuffer
+ * @brief Ring buffer for RX and TX data. Based on Bill Greiman Serial library
+ * (https://github.com/greiman/SerialPort).
+ */
+class SerialRingBuffer {
+ public:
+  /** Define type for buffer indices */
+  typedef uint8_t buf_size_t;
+  int available();
+  /** @return @c true if the ring buffer is empty else @c false. */
+  bool empty() {return head_ == tail_;}
+  void flush();
+  bool get(uint8_t* b);
+  buf_size_t get(uint8_t* b, buf_size_t n);
+  void init(uint8_t* b, buf_size_t s);
+  int peek();
+  bool put(uint8_t b);
+  buf_size_t put(const uint8_t* b, buf_size_t n);
+ private:
+  uint8_t* buf_;              /**< Pointer to start of buffer. */
+  volatile buf_size_t head_;  /**< Index to next empty location. */
+  volatile buf_size_t tail_;  /**< Index to last entry if head_ != tail_. */
+  buf_size_t size_;           /**< Size of the buffer. Capacity is size -1. */
+};
+//------------------------------------------------------------------------------
+/** RX ring buffers. */
+extern SerialRingBuffer rxRingBuf;
+/** TX ring buffers. */
+extern SerialRingBuffer txRingBuf;
 
 
 #endif

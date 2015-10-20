@@ -1,21 +1,6 @@
-#define DEBUG 0
+#define DEBUG
 #include <SerialDXL.h>
 #include <Arduino.h>
-
-
-uint8_t data;      // variable to read incoming serial data into
-
-uint8_t state = 0;
-uint8_t len = 0;
-uint8_t instruction = 0;
-
-
-uint8_t parameters[8]; 
-uint8_t param_index = 0;
-
-uint8_t finish = 0;
-
-uint8_t id = 30;
 
 // VERSION LedDXL
 #define VERSION_LED_DXL 1
@@ -68,10 +53,10 @@ class LedDXL: public DeviceDXL
       initEEPROM();
     }
 
-    void proccessMsg(uint8_t msg)
+    void proccessMsg(uint8_t *msg)
     {
-      if (msg == 'H') digitalWrite(led_pin_, HIGH);
-      else if (msg == 'L') digitalWrite(led_pin_, LOW);
+      if (*msg == 'H') digitalWrite(led_pin_, HIGH);
+      else if (*msg == 'L') digitalWrite(led_pin_, LOW);
     }
 
     inline __attribute__((always_inline))
@@ -105,10 +90,11 @@ class LedDXL: public DeviceDXL
 
 
 LedDXL led(3, 10);
+SerialDXL<32> serial;
 
 void setup() {
   // Serial communication:
-  SerialDXL.init(207, &led);
+  serial.init(207, &led);
 
   led.setRX();
   if (digitalRead(5)==HIGH)
@@ -120,9 +106,9 @@ void setup() {
 }
 
 void loop() {
-  
-  if (finish)
+  uint8_t *msg = serial.getMsg();
+  if (msg)
   {
-    led.proccessMsg(parameters[0]);
+    led.proccessMsg(msg);
   }
 }

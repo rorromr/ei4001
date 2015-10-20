@@ -132,14 +132,9 @@ SerialRingBuffer::buf_size_t
 SerialRingBuffer rxRingBuf;
 SerialRingBuffer txRingBuf;
 //------------------------------------------------------------------------------
-SerialDXL_<10> SerialDXL;
-
-inline static void rx_isr() {
-  uint8_t b = UDR0;
-  SerialDXL.process(b);
-  rxRingBuf.put(b);
-}
+VirtualDeviceDXL *SerialDXL_ISR;
 
 ISR(USART_RX_vect) {
-  rx_isr();
+  uint8_t data = UDR0;
+  SerialDXL_ISR->process(data);
 }
