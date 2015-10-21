@@ -24,27 +24,6 @@
 #include <util/atomic.h>
 #include <string.h>
 //------------------------------------------------------------------------------
-/**
- * @class DeviceDXL
- * @brief Virtual class for Device with DXL.
- */
-class DeviceDXL {
-  public:
-    virtual void initRAM() {}
-
-    virtual void initEEPROM() {}
-
-    virtual inline __attribute__((always_inline))
-    void setTX() {}
-
-    virtual inline __attribute__((always_inline))
-    void setRX() {}
-
-    // ID
-    uint8_t id_;
-
-};
-//------------------------------------------------------------------------------
 /** Memory map max size */
 static const uint8_t MMAP_MAX_SIZE = 16;
 /** First bit LSB */
@@ -57,8 +36,8 @@ static const uint8_t MMAP_EEPROM = 0;
 /** Cause error message for bad Size.
  * @return Never returns since it is never called.
  */
-uint8_t badSize(void)
-  __attribute__((error("MMAP size too large")));
+uint8_t badMMapLength(void)
+  __attribute__((error("MMAP length too large")));
 //------------------------------------------------------------------------------
 /**
  * @class mmap_entry_t
@@ -84,10 +63,10 @@ class MMap
     N_(N)
     {
       // Check size
-      if (N_ > MMAP_MAX_SIZE) badSize();
+      if (N_ > MMAP_MAX_SIZE) badMMapLength();
     }
 
-    void setMMap(mmap_entry_t *mmap)
+    void init(mmap_entry_t *mmap)
     {
       mmap_ = mmap;
     }
@@ -175,6 +154,32 @@ class MMap
 };
 //------------------------------------------------------------------------------
 /**
+ * @class DeviceDXL
+ * @brief Virtual class for Device with DXL.
+ */
+class DeviceDXL {
+  public:
+    DeviceDXL(uint8_t id, uint8_t N):
+    id_(id),
+    mmap_(N)
+    {}
+    virtual void initRAM() {}
+
+    virtual void initEEPROM() {}
+
+    virtual inline __attribute__((always_inline))
+    void setTX() {}
+
+    virtual inline __attribute__((always_inline))
+    void setRX() {}
+
+    // ID
+    uint8_t id_;
+    // Memory mapping
+    MMap mmap_;
+};
+//------------------------------------------------------------------------------
+/**
  * @class VirtualDeviceDXL
  * @brief Virtual class for ISR.
  */
@@ -206,10 +211,12 @@ class SerialDXL: public VirtualDeviceDXL
       msgParamIdx_(2),
       msgLen_(0),
       msgFinish_(0),
+      msgChecksum_(0),
       error_()
     {
       // Check buffer sizes
       if (maxMsgLength > MAX_MSG_LENGTH || !maxMsgLength) badMsgBufLength();
+      // Initialize global ptr for ISR
       SerialDXL_ISR = this;
     }
 
@@ -227,24 +234,24 @@ class SerialDXL: public VirtualDeviceDXL
       // Set baudrate using Dynamixel relation
       uint16_t baud_setting = UBRR_VALUE(2000000/(baud+1));
 
-      /* Disable USART interrupts     
+      // Set baud rate
+      UBRR0H = (uint8_t)(baud_setting>>8);  // High bit
+      UBRR0L = (uint8_t)baud_setting;       // Low bit
+
+      /* USART interrupts     
       RXCIE0 | RX Complete interrupt enable
       TXCIE0 | TX Complete interrupt enable
       UDRIE0 | USART Data register empty interrupt enable (UDR0 Ready)
       RXEN0  | RX Receiver enables
       TXEN0  | TX Transmitter enable
       */
-      UCSR0B &= ~((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
 
-      // Set baud rate
-      UBRR0H = (uint8_t)(baud_setting>>8);  // High bit
-      UBRR0L = (uint8_t)baud_setting;       // Low bit
-
-      // Set frame format to Dynamixel (8 data bits, no parity, 1 stop bit)
+      // Set frame format to Dynamixel 8N1 (8 data bits, no parity, 1 stop bit)
       UCSR0C |= (1<<UCSZ01)|(1<<UCSZ00);
 
       // Enable USART interrupts
-      UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
+      //UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
+      UCSR0B |= (1<<RXEN0)|(1<<RXCIE0);
     }
 
     /**
@@ -272,6 +279,8 @@ class SerialDXL: public VirtualDeviceDXL
           
         case 3: // Length
           msgLen_ = data;
+          // Checksum
+          msgChecksum_ += device_->id_ + data;
           // Save length in the RX message buffer
           rxMsgBuf_[0] = data;
           msgState_ = 4;
@@ -280,23 +289,29 @@ class SerialDXL: public VirtualDeviceDXL
         case 4: // Instruction
           // Save instruction in the RX message buffer
           rxMsgBuf_[1] = data;
+          // Checksum
+          msgChecksum_ += data;
           // Check for short message
           msgState_ = msgLen_ <= 2 ? 6 : 5;
           break;
         
         case 5: // Parameters
           rxMsgBuf_[msgParamIdx_++] = data;
+          // Checksum
+          msgChecksum_ += data;
           // Check message length
           msgState_ = msgParamIdx_ >= msgLen_ ? 6 : msgState_;
           break;
 
         case 6: // Checksum
-          // @TODO Checksum
           rxMsgBuf_[msgParamIdx_] = data;
-          msgFinish_ = 1;
+          // Check
+          msgFinish_ = ((uint8_t)(~msgChecksum_))==data;
+          // Reset states
           msgState_ = 0;
           msgParamIdx_ = 2;
           msgLen_ = 0;
+          msgChecksum_ = 0;
           break;
       }
     }
@@ -304,6 +319,11 @@ class SerialDXL: public VirtualDeviceDXL
     uint8_t* getMsg()
     {
       return (msgFinish_) ? rxMsgBuf_ : NULL;
+    }
+
+    void reset()
+    {
+      msgFinish_ = 0;
     }
 
 
@@ -315,6 +335,7 @@ class SerialDXL: public VirtualDeviceDXL
     uint8_t msgParamIdx_;
     uint8_t msgLen_;
     uint8_t msgFinish_;
+    uint16_t msgChecksum_;
 
     // Error state
     uint8_t error_;
@@ -324,10 +345,6 @@ class SerialDXL: public VirtualDeviceDXL
     // TX buffer
     uint8_t txMsgBuf_[maxMsgLength];
 };
-
-
-
-
 //------------------------------------------------------------------------------
 /**
  * @class SerialRingBuffer

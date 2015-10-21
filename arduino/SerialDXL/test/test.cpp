@@ -11,23 +11,35 @@
 #define COMMAND 2
 #define STATE   3
 
+#define LED_ID 1
 
+/**
+ * @brief LED control using DXL communication protocol
+ * @details LED control using Dynamixel communication protocol over RS485.
+ * This implementation uses a 4 bytes (uint8_t) memory map (MMap).
+ * Example:
+ * For HIGH send {0xFF,0xFF, LED_ID, 3, 0x01, 0x01}
+ * For LOW send {0xFF,0xFF, LED_ID, 3, 0x01, 0x00}
+ * 
+ * @param id ID of device.
+ * @param dir_pin Toggle communication pin.
+ * @param led_pin LED pin.
+ */
 class LedDXL: public DeviceDXL
 {
   public:
-    LedDXL(uint8_t dir_pin, uint8_t led_pin):
+    LedDXL(uint8_t id, uint8_t dir_pin, uint8_t led_pin):
+    DeviceDXL(id, 4),
     dir_pin_(dir_pin),
     led_pin_(led_pin),
-    eeprom_null_(0),
-    mmap_(4)
+    eeprom_null_(0)
     {
       // MMAP Config
-
       MMAP_ENTRY(mmap_field_[ID], id_, MMAP_EEPROM | MMAP_RW);               // ID
       MMAP_ENTRY(mmap_field_[VERSION], eeprom_null_, MMAP_EEPROM | MMAP_R);  // Version
       MMAP_ENTRY(mmap_field_[COMMAND], command_, MMAP_RAM | MMAP_RW);        // Current command
       MMAP_ENTRY(mmap_field_[STATE], state_, MMAP_RAM | MMAP_R);             // Current state
-      mmap_.setMMap(mmap_field_);
+      mmap_.init(mmap_field_);
 
       // Config LED pin
       pinMode(led_pin_, OUTPUT);
@@ -55,8 +67,12 @@ class LedDXL: public DeviceDXL
 
     void proccessMsg(uint8_t *msg)
     {
-      if (*msg == 'H') digitalWrite(led_pin_, HIGH);
-      else if (*msg == 'L') digitalWrite(led_pin_, LOW);
+      // Instruction
+      if (msg[1] == 0x01)
+      {
+        // Parameter
+        digitalWrite(led_pin_, msg[2]);
+      }
     }
 
     inline __attribute__((always_inline))
@@ -71,8 +87,6 @@ class LedDXL: public DeviceDXL
       digitalWrite(dir_pin_,LOW);
     }
 
-
-
   private:
     const uint8_t dir_pin_; // Toggle communication direction pin
     const uint8_t led_pin_; // LED pin
@@ -84,16 +98,14 @@ class LedDXL: public DeviceDXL
 
     // Memory map
     mmap_entry_t mmap_field_[4];
-    MMap mmap_;
 };
 
 
-
-LedDXL led(3, 10);
+LedDXL led(LED_ID, 3, 10);
 SerialDXL<32> serial;
 
 void setup() {
-  // Serial communication:
+  // Init serial communication using Dynamixel format
   serial.init(207, &led);
 
   led.setRX();

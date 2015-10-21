@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdint.h>
-
 // Mesage reception state
 uint8_t msgState_=0;
 uint8_t msgParamIdx_=2;
@@ -8,19 +5,23 @@ uint8_t msgLen_=0;
 uint8_t msgFinish_=0;
 uint8_t msgChecksum_=0;
 // Buffer
-uint8_t rxMsgBuf_[10];
+#define BUF_SIZE 10
+uint8_t rxMsgBuf_[BUF_SIZE];
 // ID
 uint8_t ID = 1;
 
 void print_buffer(int n)
 {
   int i;
-  printf("[");
+  Serial.print("[");
   for (i = 0; i < n-4; ++i)
   {
-    printf("0x%.2X,", rxMsgBuf_[i]);
+    Serial.print(rxMsgBuf_[i], HEX);
+    Serial.print(",");
   }
-  printf("0x%.2X] FINISH: %i \n", rxMsgBuf_[n-4], msgFinish_);
+  Serial.print(rxMsgBuf_[n-4], HEX);
+  Serial.print("] Finish: ");
+  Serial.println(msgFinish_);
 }
 
 void process(uint8_t data)
@@ -44,7 +45,6 @@ void process(uint8_t data)
       msgLen_ = data;
       // Checksum
       msgChecksum_ += ID + data;
-      //printf("%i\n", msgChecksum_);
       // Save length in the RX message buffer
       rxMsgBuf_[0] = data;
       msgState_ = 4;
@@ -70,12 +70,22 @@ void process(uint8_t data)
       break;
 
     case 6: // Checksum
-      printf("0x%.2X ",data);
-      printf("0x%.2X ",(uint8_t)(~((uint8_t)((msgChecksum_)&0xff))));
+      Serial.print(data, HEX);
+      Serial.print(" ");
+      Serial.print((uint8_t)(~((uint8_t)((msgChecksum_)&0xff))), HEX);
+      Serial.print(" ");
+      Serial.print(~(msgChecksum_&0xff), HEX);
+      Serial.print(" ");
+      Serial.print(~(msgChecksum_), HEX);
+      Serial.print(" ");
+      Serial.print((uint8_t)~(msgChecksum_), HEX);
+      Serial.print(" ");
+      Serial.print(~(msgChecksum_)==data, HEX);
+      Serial.print(" ");
+      Serial.print((uint8_t)(~msgChecksum_)==data, HEX);
       rxMsgBuf_[msgParamIdx_] = data;
       // Check checksum
-      //printf("%i\n",(uint8_t)~(msgChecksum_&0xFF));
-      msgFinish_ = (uint8_t)(~(((msgChecksum_)&0xff))) == data ? 1 : 0;
+      msgFinish_ = ((uint8_t)(~msgChecksum_))==data;
       // Reset states
       msgState_ = 0;
       msgParamIdx_ = 2;
@@ -97,7 +107,7 @@ void reset()
 void init_buffer()
 {
   int i;
-  for (i = 0; i < 15; ++i)
+  for (i = 0; i < BUF_SIZE; ++i)
   {
     rxMsgBuf_[i] = 0;
   }
@@ -112,7 +122,7 @@ void exec_test(uint8_t *test, uint8_t length)
   }
 }
 
-int main() {
+int run() {
   // Init buffer
   uint8_t test1[] = {0xff, 0xff, 0x01, 0x03, 0x01, 0x01, 0xf9};
   uint8_t test2[] = {0xff, 0xff, 0x01, 0x04, 0x02, 0x2b, 0x01, 0xcc};
@@ -129,19 +139,33 @@ int main() {
   int i;
   for(i=0; i<6; ++i)
   {
-    printf("TEST %i: ", i);
+    Serial.print("TEST ");
+    Serial.print(i);
+    Serial.print(": ");
     exec_test(tests[i], lengths[i]);
     if (msgFinish_ == results[i])
     {
-      printf("[OK]\n");
+      Serial.println("[OK]");
     }
     else
     {
-      printf("[FAILED]\n");
+      Serial.println("[FAILED]");
       print_buffer(lengths[i]);
     }
     reset();
     init_buffer();
   }
   return(0);
+}
+
+void setup() {
+  Serial.begin(9600);
+  // put your setup code here, to run once:
+  Serial.println("[START]");
+  run();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  //run();
 }
