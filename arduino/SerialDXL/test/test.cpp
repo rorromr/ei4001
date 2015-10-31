@@ -1,42 +1,45 @@
 #define DEBUG
 #include <SerialDXL.h>
-#include <Arduino.h>
+#include <Encoder.h>
 
-// VERSION LedDXL
-#define VERSION_LED_DXL 1
 
-// LED MMAP
+/** 
+ * Memory Mapping
+ * 
+ * General settings
+ */
 #define MODEL_L   0
 #define MODEL_H   1
 #define FIRMWARE  2
 #define ID        3
 #define BAUDRATE  4
 #define RET_DELAY 5
-#define STATE     6
-#define COMMAND   7
-
-#define LED_ID 1
-
+/* Motor Settings */
+#define STATE         6
+#define VEL_COMMAND   7
+#define DIR_COMMAND   8
+#define POS_B0        9
+#define POS_B1        10
+#define POS_B2        11
+#define POS_B3        12
+//------------------------------------------------------------------------------
 /**
- * @brief LED control using DXL communication protocol
- * @details LED control using Dynamixel communication protocol over RS485.
- * This implementation uses a 4 bytes (uint8_t) memory map (MMap).
- * Example:
- * For HIGH send {0xFF,0xFF, LED_ID, 3, 0x01, 0x01}
- * For LOW send {0xFF,0xFF, LED_ID, 3, 0x01, 0x00}
+ * @brief Motor velocity control using DXL communication protocol
+ * @details Motor velocity control using Dynamixel communication protocol over RS485.
  * 
- * @param id ID of device.
- * @param dir_pin Toggle communication pin.
- * @param led_pin LED pin.
  */
-class LedDXL: public DeviceDXL
+class MotorDXL: public DeviceDXL
 {
   public:
-    LedDXL(uint8_t id, uint8_t dir_pin, uint8_t led_pin):
-    DeviceDXL(id, 8),
+    MotorDXL(uint8_t id, uint8_t dir_pin):
+    DeviceDXL(id, 13),
     dir_pin_(dir_pin),
-    led_pin_(led_pin),
-    eeprom_null_(0)
+    eeprom_null_(0),
+    state_(0),
+    vel_command_(0),
+    dir_command_(0),
+    encoder_(2,3),
+    position_(0)
     {
       /*
       * MMAP Config
@@ -56,19 +59,28 @@ class LedDXL: public DeviceDXL
       
       /*
       * MMAP Config
-      * LED settings
+      * Motor settings
       */
       // State
       MMAP_ENTRY(mmap_field_[STATE], state_, MMAP_RAM | MMAP_R);
       // Command
-      MMAP_ENTRY(mmap_field_[COMMAND], command_, MMAP_RAM | MMAP_RW);
-      
+      MMAP_ENTRY(mmap_field_[VEL_COMMAND], vel_command_, MMAP_RAM | MMAP_RW);
+      MMAP_ENTRY(mmap_field_[DIR_COMMAND], dir_command_, MMAP_RAM | MMAP_RW);
+      // Encoder position
+      MMAP_ENTRY(mmap_field_[POS_B0], position_b0_, MMAP_RAM | MMAP_R);
+      MMAP_ENTRY(mmap_field_[POS_B1], position_b1_, MMAP_RAM | MMAP_R);
+      MMAP_ENTRY(mmap_field_[POS_B2], position_b2_, MMAP_RAM | MMAP_R);
+      MMAP_ENTRY(mmap_field_[POS_B3], position_b3_, MMAP_RAM | MMAP_R);
       // Init MMAP
       mmap_.init(mmap_field_);
 
       // Config LED pin
-      pinMode(led_pin_, OUTPUT);
       pinMode(dir_pin_, OUTPUT);
+
+      // H Bridge config
+      pinMode(7,OUTPUT);
+      pinMode(8,OUTPUT);
+      pinMode(9,OUTPUT); // PWM
 
     }
 
@@ -84,15 +96,14 @@ class LedDXL: public DeviceDXL
     void initEEPROM()
     {
       // Set default ID
-      mmap_.setEEPROM(ID, 15);
+      mmap_.setEEPROM(ID, 5);
       // Set model
       mmap_.setEEPROM(MODEL_L, 1);
       mmap_.setEEPROM(MODEL_H, 0);
       // Set firmware
       mmap_.setEEPROM(FIRMWARE, 1);
-      // Baudrate
+      // Baudrate 9600 baud
       mmap_.setEEPROM(BAUDRATE, 207);
-
     }
 
     void reset()
@@ -100,30 +111,28 @@ class LedDXL: public DeviceDXL
       initEEPROM();
     }
 
-    void proccessMsg(uint8_t *msg)
-    {
-      // Ping
-      if (msg[1] == 0x02)
-      {
-        // Parameter
-        digitalWrite(led_pin_, msg[2]);
-        state_ = msg[2];
-      }
-
-    }
-
     void update()
     {
-      if (command_ == 1)
+      analogWrite(9, vel_command_);
+      if (dir_command_ == 0)
       {
-        digitalWrite(led_pin_, HIGH);
-        state_ = analogRead(A0)/4;
+        digitalWrite(7, LOW);
+        digitalWrite(8, HIGH);
+        state_ = 0;
       }
-      else if (command_ == 0)
+      else if (dir_command_ == 1)
       {
-        digitalWrite(led_pin_, LOW);
-        state_ = analogRead(A0)/4;
+        digitalWrite(7, HIGH);
+        digitalWrite(8, LOW);
+        state_ = 1;
       }
+      position_ = encoder_.read();
+      position_b0_ = (position_>>24) & 0xFF;
+      position_b1_ = (position_>>16) & 0xFF;
+      position_b2_ = (position_>>8) & 0xFF;
+      position_b3_ = position_ & 0xFF;
+
+      
     }
 
     inline __attribute__((always_inline))
@@ -140,36 +149,44 @@ class LedDXL: public DeviceDXL
 
   private:
     const uint8_t dir_pin_; // Toggle communication direction pin
-    const uint8_t led_pin_; // LED pin
 
     uint8_t eeprom_null_;
 
     // Fields
-    uint8_t state_, command_;
+    uint8_t state_;
+    uint8_t vel_command_;
+    uint8_t dir_command_;
 
     // Memory map
-    mmap_entry_t mmap_field_[8];
+    mmap_entry_t mmap_field_[13];
+
+    Encoder encoder_;
+    int32_t position_;
+    uint8_t position_b0_;
+    uint8_t position_b1_;
+    uint8_t position_b2_;
+    uint8_t position_b3_;
 };
 
 
-LedDXL led(LED_ID, 3, 10);
+MotorDXL motor(5, 4);
 SerialDXL<32> serial;
 
 void setup() {
   // Init serial communication using Dynamixel format
-  serial.init(207, &led);
-  led.setRX();
+  serial.init(207, &motor);
+  motor.setRX();
 
   if (digitalRead(5)==HIGH)
   {
     DEBUG_PRINTLN("RESET!");
-    led.reset();
+    motor.reset();
     toggleLed(3);
   }
-  led.initRAM();
+  motor.initRAM();
 }
 
 void loop() {
-  led.update();
+  motor.update();
   delay(20);
 }
