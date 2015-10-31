@@ -138,3 +138,14 @@ ISR(USART_RX_vect) {
   uint8_t data = UDR0;
   SerialDXL_ISR->process(data);
 }
+
+void toggleLed(uint8_t n)
+{
+  for (int i = 0; i<n; ++i)
+  {
+    digitalWrite(13, HIGH);
+    _delay_us(100);
+    digitalWrite(13, LOW);
+    _delay_us(100);
+  }
+}

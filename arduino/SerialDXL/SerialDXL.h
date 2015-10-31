@@ -23,6 +23,10 @@
 #include <avr/sleep.h>
 #include <util/atomic.h>
 #include <string.h>
+#include "Arduino.h"
+
+void toggleLed(uint8_t n = 3);
+
 //------------------------------------------------------------------------------
 /** Memory map max size */
 static const uint8_t MMAP_MAX_SIZE = 16;
@@ -175,6 +179,13 @@ class DeviceDXL {
 
     // ID
     uint8_t id_;
+
+    // Baudrate
+    uint8_t baudrate_;
+
+    // Return dalay time
+    uint8_t returnDelay_;
+
     // Memory mapping
     MMap mmap_;
 };
@@ -247,11 +258,10 @@ class SerialDXL: public VirtualDeviceDXL
       */
 
       // Set frame format to Dynamixel 8N1 (8 data bits, no parity, 1 stop bit)
-      UCSR0C |= (1<<UCSZ01)|(1<<UCSZ00);
+      UCSR0C = (1<<UCSZ01)|(1<<UCSZ00);
 
-      // Enable USART interrupts
-      //UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
-      UCSR0B |= (1<<RXEN0)|(1<<RXCIE0);
+      // Enable USART RX interrupts and TX
+      UCSR0B = (1<<TXEN0)|(1<<RXEN0)|(1<<RXCIE0);
     }
 
     /**
@@ -262,6 +272,7 @@ class SerialDXL: public VirtualDeviceDXL
      */
     void process(uint8_t data)
     {
+      cli();
       switch(msgState_)
       {
         case 0: // 0xFF
@@ -314,7 +325,99 @@ class SerialDXL: public VirtualDeviceDXL
           msgChecksum_ = 0;
           break;
       }
+
+      // Process message
+      if (msgFinish_)
+      {
+        uint8_t i;
+        switch(rxMsgBuf_[1])
+        {
+          case 1: // Ping
+            txMsgBuf_[0] = 0xff;
+            txMsgBuf_[1] = 0xff;
+            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[3] = 2; // Length
+            txMsgBuf_[4] = 0; // Error
+            txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
+            // Status return delay
+            //_delay_us(160);
+            
+            device_->setTX();
+            // Send
+            for (i = 0; i <= 5; ++i)
+            {
+              while (!(UCSR0A & _BV(UDRE0)));
+              UDR0 = txMsgBuf_[i];
+            }
+            while (!(UCSR0A & _BV(UDRE0)));
+            device_->setRX();
+            msgFinish_ = 0;
+            break;
+
+          case 2: // Read data
+            txMsgBuf_[0] = 0xff;
+            txMsgBuf_[1] = 0xff;
+            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[3] = 3; // Length
+            txMsgBuf_[4] = 0; // Error
+            // @TODO
+            txMsgBuf_[5] = device_->mmap_.get(rxMsgBuf_[2]);
+            
+            txMsgBuf_[6] = ~(txMsgBuf_[2]+txMsgBuf_[3]+txMsgBuf_[4]+txMsgBuf_[5]);
+            // Status return delay
+            _delay_us(160);
+
+            device_->setTX();
+            // Send
+            for (i = 0; i <= 6; ++i)
+            {
+              while (!(UCSR0A & _BV(UDRE0)));
+              UDR0 = txMsgBuf_[i];
+            }
+            while (!(UCSR0A & _BV(UDRE0)));
+            device_->setRX();
+            msgFinish_ = 0;
+            break;
+
+          case 3: // Write data
+            txMsgBuf_[0] = 0xff;
+            txMsgBuf_[1] = 0xff;
+            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[3] = 2; // Length
+
+            // @TODO
+            // Only one byte
+            device_->mmap_.set(rxMsgBuf_[2],rxMsgBuf_[3]);
+
+            txMsgBuf_[4] = 0; // Error
+            txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
+            // Status return delay
+            _delay_us(160);
+            
+            device_->setTX();
+            // Send
+            for (i = 0; i <= 5; ++i)
+            {
+              while (!(UCSR0A & _BV(UDRE0)));
+              UDR0 = txMsgBuf_[i];
+            }
+            while (!(UCSR0A & _BV(UDRE0)));
+            device_->setRX();
+            msgFinish_ = 0;
+            break;
+
+        }
+      }
+      sei();
     }
+
+    void sendByte(uint8_t data)
+    {
+      // Wait for data buffer is empty
+      while (!(UCSR0A & _BV(UDRE0)));
+      UDR0 = data;
+    }
+
 
     uint8_t* getMsg()
     {
