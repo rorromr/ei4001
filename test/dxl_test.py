@@ -6,7 +6,7 @@ from dynamixel_driver.dynamixel_io import DynamixelIO
 
 def test_ping(dxl, id):
     test_ids = [7, 8, 16, 32, 45, 37, 72]
-    for i in range(200):
+    for i in range(15):
         if dxl.ping(test_ids[i%len(test_ids)]):
             print "[FAIL]"
 
@@ -34,7 +34,7 @@ def test_write(dxl, id):
             print "[FAIL]"
             
 def main():
-    dxl = DynamixelIO('/dev/ttyUSB1', baudrate = 9600)
+    dxl = DynamixelIO('/dev/ttyUSB0', baudrate = 9600)
     
     # command = int(sys.argv[1])
     # print 'Command: ' + str(command)
@@ -43,7 +43,10 @@ def main():
     #test_ping(dxl, 15)
     #test_write(dxl, 15)
     while True:
+        dxl.write(15,7,[1])
         print dxl.read(15, 6, 1)[-3]
+        time.sleep(0.1)
+        dxl.write(15,7,[0])
         time.sleep(0.1)
 
 

@@ -349,7 +349,11 @@ class SerialDXL: public VirtualDeviceDXL
               while (!(UCSR0A & _BV(UDRE0)));
               UDR0 = txMsgBuf_[i];
             }
-            while (!(UCSR0A & _BV(UDRE0)));
+
+            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
+            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
+            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
+            
             device_->setRX();
             msgFinish_ = 0;
             break;
@@ -374,7 +378,10 @@ class SerialDXL: public VirtualDeviceDXL
               while (!(UCSR0A & _BV(UDRE0)));
               UDR0 = txMsgBuf_[i];
             }
-            while (!(UCSR0A & _BV(UDRE0)));
+            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
+            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
+            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
+            
             device_->setRX();
             msgFinish_ = 0;
             break;
@@ -401,7 +408,10 @@ class SerialDXL: public VirtualDeviceDXL
               while (!(UCSR0A & _BV(UDRE0)));
               UDR0 = txMsgBuf_[i];
             }
-            while (!(UCSR0A & _BV(UDRE0)));
+            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
+            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
+            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
+            
             device_->setRX();
             msgFinish_ = 0;
             break;
