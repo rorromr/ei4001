@@ -30,12 +30,6 @@ Encoder encoder(encoder_channelA,encoder_channelB);
 void controlP(){
   inputP = encoder.read();
   pidP.Compute();
-  if (outputP>Wmax){
-    outputP = Wmax;
-  }
-  else if (outputP<-Wmax){
-    outputP = -Wmax;
-  }
   controlW(outputP); //Revisar esto de las referencia, si estan bien puestas
 }
 
@@ -70,6 +64,8 @@ void setup(){
   pidW.SetMode(AUTOMATIC); 
   pidP.SetSampleTime(STime);
   pidW.SetSampleTime(STime/10);
+  pidP.SetOutputLimits(-Wmax,Wmax);
+  pidW.SetOutputLimits(-Vmax,Vmax);
 }
 
 void loop(){
