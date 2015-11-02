@@ -14,9 +14,10 @@ long actualPos, auxPos=0;
 
 //Limites
 float Wmax,Vmax; //limitadores para velocidad y voltaje
+float Largo = (1000/5)*360; // Largo expresado en tics. 1m, 5mm de paso y 360 tics por vuelta
 
 //Sample time ms
-int STime = 5; 
+int STime = 5, Tsubida = 10000; 
 
 
 //controladores
@@ -31,17 +32,7 @@ void controlP(){
   inputP = encoder.read();
   pidP.Compute();
   controlW(outputP); //Revisar esto de las referencia, si estan bien puestas
-}
-
-
-void controlW(double outputP){
-  actualPos = encoder.read();
-  refW = outputP;
-  inputW = (actualPos-auxPos)/(STime/10); //diferencia entre posicion actual y anterior, en un periodo de tiempo igual al muestreo
-  pidW.Compute();
-  
-  outputW = outputW/Vmax; //voltaje
-  if (outputW>0){
+  if (outputP>0){
     digitalWrite(MOTOR_CTL1,HIGH);
     digitalWrite(MOTOR_CTL2,LOW);
   }
@@ -49,6 +40,18 @@ void controlW(double outputP){
     digitalWrite(MOTOR_CTL1,LOW);
     digitalWrite(MOTOR_CTL2,HIGH);
   }
+  controlW(abs(outputP)*Tsubida/Largo);
+}
+
+
+void controlW(double ref){
+  actualPos = encoder.read();
+  refW = ref;
+  inputW = (actualPos-auxPos)/(STime/10); //diferencia entre posicion actual y anterior, en un periodo de tiempo igual al muestreo
+  pidW.Compute();
+  
+  outputW = outputW/Vmax; //voltaje
+ 
   analogWrite(MOTOR_PWM,(int) abs(outputW*255));
   auxPos = actualPos;
   
