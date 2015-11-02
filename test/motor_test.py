@@ -33,38 +33,39 @@ def test_write(dxl, id):
         print r
         if r != v:
             print "[FAIL]"
+
+def get_encoder(dxl, id):
+    b = [0,0,0,0]
+    b[0] = dxl.read(id,9,1)[-3]
+    b[1] = dxl.read(id,10,1)[-3]
+    b[2] = dxl.read(id,11,1)[-3]
+    b[3] = dxl.read(id,12,1)[-3]
+    return struct.unpack('<i',struct.pack('BBBB',b[3],b[2],b[1],b[0]))[0]
             
 def main():
-    dxl = DynamixelIO('/dev/ttyUSB1', baudrate = 9600)
+    dxl = DynamixelIO('/dev/ttyUSB0', baudrate = 9600)
     
     # command = int(sys.argv[1])
     # print 'Command: ' + str(command)
     
     # [0xFF, 0xFF, ID, Length, Instruction, Parameters, Checksum]
-    #test_ping(dxl, 15)
+    test_ping(dxl, 5)
     #test_write(dxl, 15)
     print dxl.ping(5)
 
-    # dxl.write(5,7,[150])
-    # dxl.write(5,8,[1])
-    # time.sleep(1)
-
-    # dxl.write(5,7,[100])
-    # dxl.write(5,8,[0])
-    # time.sleep(3)
+    dxl.write(5,7,[0])
     
-    # dxl.write(5,8,[1])
-    # dxl.write(5,7,[200])
-
-    b = [0,0,0,0]
     while True:
-        b[0] = dxl.read(5,9,1)[-3]
-        b[1] = dxl.read(5,10,1)[-3]
-        b[2] = dxl.read(5,11,1)[-3]
-        b[3] = dxl.read(5,12,1)[-3]
-        #print b
-        time.sleep(0.05)
-        print struct.unpack('<i',struct.pack('BBBB',b[3],b[2],b[1],b[0]))[0]
+        print get_encoder(dxl, 5)
+        dxl.write(5,8,[1])
+        time.sleep(1)
+
+        print get_encoder(dxl, 5)
+        dxl.write(5,8,[0])
+        time.sleep(1)
+    
+
+
 
 if __name__ == '__main__':
     main()
