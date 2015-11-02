@@ -9,10 +9,12 @@ def test_ping(dxl, id):
     test_ids = [7, 8, 16, 32, 45, 37, 72]
     for i in range(15):
         if dxl.ping(test_ids[i%len(test_ids)]):
-            print "[FAIL]"
+            print "a[FAIL]"
 
+
+        print dxl.ping(id)
         if not dxl.ping(id):
-            print "[FAIL]"
+            print "b[FAIL]"
 
 def test_read(dxl, id):
     address = [3,4]
@@ -52,20 +54,12 @@ def main():
     test_ping(dxl, 5)
     #test_write(dxl, 15)
     print dxl.ping(5)
+    print dxl.ping(5)
+    print dxl.ping(5)
 
-    dxl.write(5,7,[0])
-    
     while True:
-        print get_encoder(dxl, 5)
-        dxl.write(5,8,[1])
-        time.sleep(1)
-
-        print get_encoder(dxl, 5)
-        dxl.write(5,8,[0])
-        time.sleep(1)
-    
-
-
+        dxl.write(5,13,[136])
+        time.sleep(5)
 
 if __name__ == '__main__':
     main()

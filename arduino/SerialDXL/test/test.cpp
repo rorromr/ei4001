@@ -1,7 +1,7 @@
 #define DEBUG
 #include <SerialDXL.h>
 #include <Encoder.h>
-
+#include <PID_v1.h>
 
 /** 
  * Memory Mapping
@@ -22,6 +22,7 @@
 #define POS_B1        10
 #define POS_B2        11
 #define POS_B3        12
+#define POS_COMMAND   13
 //------------------------------------------------------------------------------
 /**
  * @brief Motor velocity control using DXL communication protocol
@@ -32,14 +33,19 @@ class MotorDXL: public DeviceDXL
 {
   public:
     MotorDXL(uint8_t id, uint8_t dir_pin):
-    DeviceDXL(id, 13),
+    DeviceDXL(id, 14),
     dir_pin_(dir_pin),
     eeprom_null_(0),
     state_(0),
     vel_command_(0),
     dir_command_(0),
+    pos_command_(128),
     encoder_(2,3),
-    position_(0)
+    position_(0),
+    pid_in_(0),
+    pid_out_(0),
+    pid_ref_(0),
+    pid_(&pid_in_, &pid_out_, &pid_ref_,  4.5, 3.5, 0.1, DIRECT)
     {
       /*
       * MMAP Config
@@ -71,6 +77,8 @@ class MotorDXL: public DeviceDXL
       MMAP_ENTRY(mmap_field_[POS_B1], position_b1_, MMAP_RAM | MMAP_R);
       MMAP_ENTRY(mmap_field_[POS_B2], position_b2_, MMAP_RAM | MMAP_R);
       MMAP_ENTRY(mmap_field_[POS_B3], position_b3_, MMAP_RAM | MMAP_R);
+      // Position command
+      MMAP_ENTRY(mmap_field_[POS_COMMAND], pos_command_, MMAP_RAM | MMAP_RW);
       // Init MMAP
       mmap_.init(mmap_field_);
 
@@ -82,6 +90,10 @@ class MotorDXL: public DeviceDXL
       pinMode(8,OUTPUT);
       pinMode(9,OUTPUT); // PWM
 
+      // PID Config
+      pid_.SetMode(AUTOMATIC);
+      pid_.SetSampleTime(20);
+      pid_.SetOutputLimits(-255, 255);
     }
 
     void initRAM()
@@ -113,20 +125,34 @@ class MotorDXL: public DeviceDXL
 
     void update()
     {
-      analogWrite(9, vel_command_);
-      if (dir_command_ == 0)
+      pid_ref_ = (pos_command_ - 128)*10;
+      position_ = encoder_.read();
+      pid_in_ = position_;
+      pid_.Compute();
+
+
+      position_b0_ = (position_>>24) & 0xFF;
+      position_b1_ = (position_>>16) & 0xFF;
+      position_b2_ = (position_>>8) & 0xFF;
+      position_b3_ = position_ & 0xFF;
+
+      analogWrite(9, abs(pid_out_));
+
+      if (pid_out_ > 0)
       {
         digitalWrite(7, LOW);
         digitalWrite(8, HIGH);
         state_ = 0;
       }
-      else if (dir_command_ == 1)
+      else
       {
         digitalWrite(7, HIGH);
         digitalWrite(8, LOW);
         state_ = 1;
       }
       position_ = encoder_.read();
+      pid_in_ = position_;
+
       position_b0_ = (position_>>24) & 0xFF;
       position_b1_ = (position_>>16) & 0xFF;
       position_b2_ = (position_>>8) & 0xFF;
@@ -156,9 +182,10 @@ class MotorDXL: public DeviceDXL
     uint8_t state_;
     uint8_t vel_command_;
     uint8_t dir_command_;
+    uint8_t pos_command_;
 
     // Memory map
-    mmap_entry_t mmap_field_[13];
+    mmap_entry_t mmap_field_[14];
 
     Encoder encoder_;
     int32_t position_;
@@ -166,6 +193,9 @@ class MotorDXL: public DeviceDXL
     uint8_t position_b1_;
     uint8_t position_b2_;
     uint8_t position_b3_;
+
+    double pid_in_, pid_out_, pid_ref_;
+    PID pid_;
 };
 
 

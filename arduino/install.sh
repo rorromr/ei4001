@@ -10,6 +10,7 @@ else
   echo "${bold}Installing Arduino libraries...${reset}"
   current_dir=${PWD}
   ln -s "${current_dir}/SerialDXL" ~/Arduino/libraries/SerialDXL
-  ln -s "${current_dir}/encoder" ~/Arduino/libraries/encoder
+  ln -s "${current_dir}/Encoder" ~/Arduino/libraries/Encoder
+  ln -s "${current_dir}/PID" ~/Arduino/libraries/PID
 fi
 
