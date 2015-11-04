@@ -17,6 +17,8 @@
  *    The parameters specified here are those for for which we can't set up 
  *    reliable defaults, so we need to have the user set them.
  ***************************************************************************/
+
+
 PID::PID(double* Input, double* Output, double* Setpoint,
         double Kp, double Ki, double Kd, int ControllerDirection)
 {
@@ -24,12 +26,13 @@ PID::PID(double* Input, double* Output, double* Setpoint,
     myOutput = Output;
     myInput = Input;
     mySetpoint = Setpoint;
-	inAuto = false;
+	  inAuto = false;
 	
-	PID::SetOutputLimits(0, 255);				//default output limit corresponds to 
+	 PID::SetOutputLimits(0, 255);				//default output limit corresponds to 
 												//the arduino pwm limits
 
     SampleTime = 100;							//default Controller Sample Time is 0.1 seconds
+
 
     PID::SetControllerDirection(ControllerDirection);
     PID::SetTunings(Kp, Ki, Kd);
@@ -52,19 +55,43 @@ bool PID::Compute()
    if(timeChange>=SampleTime)
    {
       /*Compute all the working error variables*/
-	  double input = *myInput;
+	    double input = *myInput;
       double error = *mySetpoint - input;
       ITerm+= (ki * error);
-      if(ITerm > outMax) ITerm= outMax;
-      else if(ITerm < outMin) ITerm= outMin;
+
+
+
+      //Anti windup segun controlista
+      //if (*myOutput > outMax || *myOutput < outMin){
+      //  ITerm = 0;
+      //}
+
+      //Anti windup segun libreria
+      //if(ITerm > outMax) ITerm= outMax;
+      //else if(ITerm < outMin) ITerm= outMin;
+
       double dInput = (input - lastInput);
  
       /*Compute PID Output*/
       double output = kp * error + ITerm- kd * dInput;
-      
-	  if(output > outMax) output = outMax;
-      else if(output < outMin) output = outMin;
-	  *myOutput = output;
+
+         //ANti windup alternativo
+      if (output > outMax){
+        ITerm-= (output-outMax);
+        output = outMax;
+      }
+      else if (output < outMin){
+        ITerm += outMin-output;
+        output = outMin;
+      }
+
+      //if(output > outMax){
+      //  output = outMax;
+      //}
+      //else if(output < outMin){
+      //  output = outMin;
+      //}
+	     *myOutput = output;
 	  
       /*Remember some variables for next time*/
       lastInput = input;
