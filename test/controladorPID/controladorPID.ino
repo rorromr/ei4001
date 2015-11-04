@@ -1,23 +1,22 @@
 #include <Encoder.h>
 #include <PID_v1.h>
 
-# define MOTOR_CTL1 8
-# define MOTOR_CTL2 10
+# define MOTOR_CTL1 7
+# define MOTOR_CTL2 8
 # define MOTOR_PWM 9
 # define encoder_channelA 2
 # define encoder_channelB 3
 
 //Defino variables
-double refP,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
-double KpP=2, KiP=5, KdP=1, KpW=2, KiW=5, KdW=4;
+double refP = 5*1440,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
+double KpP=4.5, KiP=3.5, KdP=0.1, KpW=3, KiW=1, KdW=0.1;
 long actualPos, auxPos=0;
 
 //Limites
-float Wmax,Vmax; //limitadores para velocidad y voltaje
-float Largo = (1000/5)*360; // Largo expresado en tics. 1m, 5mm de paso y 360 tics por vuelta
+float Wmax = 255,Vmax; //limitadores para velocidad y voltaje
 
 //Sample time ms
-int STime = 5, Tsubida = 10000; 
+int STime = 20; 
 
 
 //controladores
@@ -31,8 +30,7 @@ Encoder encoder(encoder_channelA,encoder_channelB);
 void controlP(){
   inputP = encoder.read();
   pidP.Compute();
-  controlW(outputP); //Revisar esto de las referencia, si estan bien puestas
-  if (outputP>0){
+  if (outputP<0){
     digitalWrite(MOTOR_CTL1,HIGH);
     digitalWrite(MOTOR_CTL2,LOW);
   }
@@ -40,7 +38,16 @@ void controlP(){
     digitalWrite(MOTOR_CTL1,LOW);
     digitalWrite(MOTOR_CTL2,HIGH);
   }
-  controlW(abs(outputP)*Tsubida/Largo);
+  analogWrite(MOTOR_PWM,abs(outputP));
+  //controlW(abs(outputP));
+  Serial.println("ref=");
+  Serial.println(refP);
+  
+  Serial.println("input=");
+  Serial.println(inputP);
+  
+  Serial.println("output");
+  Serial.println(outputP);
 }
 
 
@@ -49,10 +56,8 @@ void controlW(double ref){
   refW = ref;
   inputW = (actualPos-auxPos)/(STime/10); //diferencia entre posicion actual y anterior, en un periodo de tiempo igual al muestreo
   pidW.Compute();
-  
-  outputW = outputW/Vmax; //voltaje
+   //voltaje
  
-  analogWrite(MOTOR_PWM,(int) abs(outputW*255));
   auxPos = actualPos;
   
 }
@@ -64,14 +69,14 @@ void setup(){
   pinMode ( MOTOR_CTL2 , OUTPUT );
   pinMode ( MOTOR_PWM , OUTPUT );
   pidP.SetMode(AUTOMATIC); 
-  pidW.SetMode(AUTOMATIC); 
+  //pidW.SetMode(AUTOMATIC); 
   pidP.SetSampleTime(STime);
-  pidW.SetSampleTime(STime/10);
+  //pidW.SetSampleTime(STime/10);
   pidP.SetOutputLimits(-Wmax,Wmax);
-  pidW.SetOutputLimits(-Vmax,Vmax);
+  //pidW.SetOutputLimits(-Vmax,Vmax);
 }
 
 void loop(){
   controlP();
-  delay(30);
+  delay(STime);
 }
