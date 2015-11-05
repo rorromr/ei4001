@@ -4,8 +4,7 @@
 #include <std_msgs/Float64.h>  //Cambiar tipo de datos, al final los mensajes son casi puros int
 
 ros::NodeHandle nh;
-
-
+std_msgs::Float64 pos_msg;
 
 # define MOTOR_CTL1 7
 # define MOTOR_CTL2 8
@@ -31,7 +30,7 @@ PID pidW(&inputW, &outputW, &refW, KpW, KiW, KdW, DIRECT);
 
 Encoder encoder(encoder_channelA,encoder_channelB);
 
-void REF(const std_msgs::Float64 & setpoint){
+void REF(const std_msgs::Float64& setpoint){
   refP = setpoint.data;
   
 }
@@ -72,7 +71,8 @@ void controlW(double ref){
   
 }
 
-ros::Subscriber<std_msgs::Float64>sub("referencia",&REF);
+ros::Subscriber<std_msgs::Float64> sub("referencia",&REF);
+ros::Publisher  pub("actual_pos",&pos_msg); 
   
 void setup(){
   Serial.begin(9600);
@@ -82,6 +82,7 @@ void setup(){
   
   nh.initNode();
   nh.subscribe(sub);
+  nh.advertise(pub);
   
   pidP.SetMode(AUTOMATIC); 
   //pidW.SetMode(AUTOMATIC); 
@@ -92,6 +93,8 @@ void setup(){
 }
 
 void loop(){
+  pos_msg.data = encoder.read();
+  pub.publish(&pos_msg);
   nh.spinOnce();
   controlP();
   delay(STime);
