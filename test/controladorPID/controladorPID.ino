@@ -1,5 +1,11 @@
 #include <Encoder.h>
 #include <PID_v1.h>
+#include <ros.h>
+#include <std_msgs/Float64.h>  //Cambiar tipo de datos, al final los mensajes son casi puros int
+
+ros::NodeHandle nh;
+
+
 
 # define MOTOR_CTL1 7
 # define MOTOR_CTL2 8
@@ -8,7 +14,7 @@
 # define encoder_channelB 3
 
 //Defino variables
-double refP = 5*1440,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
+double refP,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
 double KpP=4.5, KiP=3.5, KdP=0.1, KpW=3, KiW=1, KdW=0.1;
 long actualPos, auxPos=0;
 
@@ -25,7 +31,11 @@ PID pidW(&inputW, &outputW, &refW, KpW, KiW, KdW, DIRECT);
 
 Encoder encoder(encoder_channelA,encoder_channelB);
 
-
+void REF(const std_msgs::Float64 & setpoint){
+  refP = setpoint.data;
+  
+}
+  
 
 void controlP(){
   inputP = encoder.read();
@@ -61,13 +71,18 @@ void controlW(double ref){
   auxPos = actualPos;
   
 }
-    
+
+ros::Subscriber<std_msgs::Float64>sub("referencia",&REF);
   
 void setup(){
   Serial.begin(9600);
   pinMode ( MOTOR_CTL1 , OUTPUT );
   pinMode ( MOTOR_CTL2 , OUTPUT );
   pinMode ( MOTOR_PWM , OUTPUT );
+  
+  nh.initNode();
+  nh.subscribe(sub);
+  
   pidP.SetMode(AUTOMATIC); 
   //pidW.SetMode(AUTOMATIC); 
   pidP.SetSampleTime(STime);
@@ -77,6 +92,7 @@ void setup(){
 }
 
 void loop(){
+  nh.spinOnce();
   controlP();
   delay(STime);
 }
