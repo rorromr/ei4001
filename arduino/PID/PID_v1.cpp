@@ -62,9 +62,9 @@ bool PID::Compute()
 
 
       //Anti windup segun controlista
-      //if (*myOutput > outMax || *myOutput < outMin){
-      //  ITerm = 0;
-      //}
+      if (*myOutput > outMax || *myOutput < outMin){
+       ITerm = 0;
+      }
 
       //Anti windup segun libreria
       //if(ITerm > outMax) ITerm= outMax;
@@ -76,14 +76,14 @@ bool PID::Compute()
       double output = kp * error + ITerm- kd * dInput;
 
          //ANti windup alternativo
-      if (output > outMax){
+/*      if (output > outMax){
         ITerm-= (output-outMax);
         output = outMax;
       }
       else if (output < outMin){
         ITerm += outMin-output;
         output = outMin;
-      }
+      }*/
 
       //if(output > outMax){
       //  output = outMax;

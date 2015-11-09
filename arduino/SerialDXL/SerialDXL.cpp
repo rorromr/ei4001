@@ -134,10 +134,10 @@ SerialRingBuffer txRingBuf;
 //------------------------------------------------------------------------------
 VirtualDeviceDXL *SerialDXL_ISR;
 
-ISR(USART_RX_vect) {
+/*ISR(USART_RX_vect) {
   uint8_t data = UDR0;
   SerialDXL_ISR->process(data);
-}
+}*/
 
 void toggleLed(uint8_t n)
 {

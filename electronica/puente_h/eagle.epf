@@ -347,10 +347,11 @@ UsedLibrary="/opt/eagle-7.4.0/lbr/xilinx-xcv.lbr"
 UsedLibrary="/opt/eagle-7.4.0/lbr/zetex.lbr"
 UsedLibrary="/opt/eagle-7.4.0/lbr/zilog.lbr"
 UsedLibrary="components.lbr"
+UsedLibrary="adum140x.lbr"
 
 [Win_1]
 Type="Control Panel"
-Loc="381 251 1169 657"
+Loc="229 301 1335 700"
 State=2
 Number=0
 

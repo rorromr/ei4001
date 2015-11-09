@@ -7,7 +7,7 @@ AVRDUDE      = $(ARDUINO_DIR)/hardware/tools/avr/bin/avrdude
 AVRDUDE_CONF = $(ARDUINO_DIR)/hardware/tools/avr/etc/avrdude.conf
 
 AVR_TOOLS_PATH = $(ARDUINO_DIR)/hardware/tools/avr/bin
-ARDUINO_LIBS = SerialDXL Encoder PID
+ARDUINO_LIBS = SerialDXL Encoder PID ros_lib
 
 
 include /opt/arduino-mk/Arduino.mk

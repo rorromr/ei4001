@@ -3,6 +3,10 @@
 #include <Encoder.h>
 #include <PID_v1.h>
 
+#include <ros.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/Float64.h>
+
 /** 
  * Memory Mapping
  * 
@@ -45,7 +49,7 @@ class MotorDXL: public DeviceDXL
     pid_in_(0),
     pid_out_(0),
     pid_ref_(0),
-    pid_(&pid_in_, &pid_out_, &pid_ref_,  4.5, 3.5, 0.1, DIRECT)
+    pid_(&pid_in_, &pid_out_, &pid_ref_,  3.0, 1.0, 0.1, DIRECT)
     {
       /*
       * MMAP Config
@@ -125,7 +129,6 @@ class MotorDXL: public DeviceDXL
 
     void update()
     {
-      pid_ref_ = (pos_command_ - 128)*10;
       position_ = encoder_.read();
       pid_in_ = position_;
       pid_.Compute();
@@ -173,6 +176,16 @@ class MotorDXL: public DeviceDXL
       digitalWrite(dir_pin_,LOW);
     }
 
+    int32_t getPos()
+    {
+      return position_;
+    }
+
+    void setRef(double ref)
+    {
+      pid_ref_ = ref;
+    }
+
   private:
     const uint8_t dir_pin_; // Toggle communication direction pin
 
@@ -198,14 +211,26 @@ class MotorDXL: public DeviceDXL
     PID pid_;
 };
 
+void position_cb( const std_msgs::Float64& command);
 
 MotorDXL motor(5, 4);
-SerialDXL<32> serial;
+//SerialDXL<32> serial;
+ros::NodeHandle nh;
+std_msgs::Int32 pos_msg;
+ros::Publisher pos_pub("torso_pos", &pos_msg);
+ros::Subscriber<std_msgs::Float64> sub("torso_cmd", &position_cb );
+
+void position_cb( const std_msgs::Float64& command){
+  motor.setRef(command.data);
+}
 
 void setup() {
   // Init serial communication using Dynamixel format
-  serial.init(207, &motor);
+  //serial.init(207, &motor);
   motor.setRX();
+  nh.initNode();
+  nh.advertise(pos_pub);
+  nh.subscribe(sub);
 
   if (digitalRead(5)==HIGH)
   {
@@ -217,6 +242,11 @@ void setup() {
 }
 
 void loop() {
+  nh.spinOnce();
   motor.update();
+
+  pos_msg.data = motor.getPos();
+  pos_pub.publish(&pos_msg);
+  
   delay(20);
 }
