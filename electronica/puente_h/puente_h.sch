@@ -12447,172 +12447,6 @@ High and low side driver</description>
 <text x="-8.001" y="-3.048" size="1.27" layer="25" ratio="10" rot="R90">&gt;NAME</text>
 <text x="-5.461" y="-0.635" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
 </package>
-</packages>
-<symbols>
-<symbol name="IR2110">
-<wire x1="-15.24" y1="-15.24" x2="-15.24" y2="15.24" width="0.254" layer="94"/>
-<text x="-15.24" y="16.51" size="1.778" layer="95">&gt;NAME</text>
-<text x="-15.24" y="-17.78" size="1.778" layer="96">&gt;VALUE</text>
-<pin name="HIN" x="-20.32" y="10.16" length="middle" direction="in"/>
-<pin name="SD" x="-20.32" y="-5.08" length="middle" direction="in"/>
-<pin name="LIN" x="-20.32" y="2.54" length="middle" direction="in"/>
-<pin name="VDD" x="-5.08" y="20.32" length="middle" direction="pwr" rot="R270"/>
-<pin name="VCC" x="0" y="20.32" length="middle" direction="pwr" rot="R270"/>
-<pin name="COM" x="0" y="-20.32" length="middle" direction="pwr" rot="R90"/>
-<pin name="VSS" x="-5.08" y="-20.32" length="middle" direction="pwr" rot="R90"/>
-<pin name="VB" x="15.24" y="10.16" length="middle" direction="pwr" rot="R180"/>
-<pin name="VS" x="15.24" y="5.08" length="middle" direction="pwr" rot="R180"/>
-<pin name="HO" x="15.24" y="-2.54" length="middle" direction="out" rot="R180"/>
-<pin name="LO" x="15.24" y="-10.16" length="middle" direction="out" rot="R180"/>
-<wire x1="-15.24" y1="15.24" x2="10.16" y2="15.24" width="0.254" layer="94"/>
-<wire x1="10.16" y1="15.24" x2="10.16" y2="-15.24" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-15.24" x2="-15.24" y2="-15.24" width="0.254" layer="94"/>
-</symbol>
-<symbol name="UF4007">
-<wire x1="-3.81" y1="-1.905" x2="-1.27" y2="0" width="0.254" layer="94"/>
-<wire x1="-1.27" y1="0" x2="-3.81" y2="1.905" width="0.254" layer="94"/>
-<wire x1="-3.81" y1="1.905" x2="-3.81" y2="-1.905" width="0.254" layer="94"/>
-<wire x1="-1.143" y1="1.905" x2="-1.143" y2="-1.905" width="0.254" layer="94"/>
-<text x="-4.8514" y="2.6416" size="1.778" layer="95">&gt;NAME</text>
-<text x="-5.1054" y="-4.4958" size="1.778" layer="96">&gt;VALUE</text>
-<pin name="A" x="-5.08" y="0" visible="off" length="short" direction="pas"/>
-<pin name="C" x="0" y="0" visible="off" length="short" direction="pas" rot="R180"/>
-</symbol>
-<symbol name="IRF2804">
-<wire x1="-3.556" y1="2.54" x2="-3.556" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="-3.556" y1="-2.54" x2="-5.08" y2="-2.54" width="0.1524" layer="94"/>
-<wire x1="0" y1="2.54" x2="0" y2="2.159" width="0.1524" layer="94"/>
-<wire x1="-2.032" y1="-2.159" x2="0" y2="-2.159" width="0.1524" layer="94"/>
-<wire x1="0" y1="-2.159" x2="0" y2="-2.54" width="0.1524" layer="94"/>
-<wire x1="0.762" y1="0.508" x2="1.27" y2="0.508" width="0.1524" layer="94"/>
-<wire x1="1.27" y1="0.508" x2="1.778" y2="0.508" width="0.1524" layer="94"/>
-<wire x1="1.27" y1="2.159" x2="0" y2="2.159" width="0.1524" layer="94"/>
-<wire x1="0" y1="2.159" x2="-2.0066" y2="2.159" width="0.1524" layer="94"/>
-<wire x1="1.27" y1="0.508" x2="1.27" y2="2.159" width="0.1524" layer="94"/>
-<wire x1="1.27" y1="-2.159" x2="1.27" y2="-0.127" width="0.1524" layer="94"/>
-<wire x1="1.27" y1="-2.159" x2="0" y2="-2.159" width="0.1524" layer="94"/>
-<wire x1="0" y1="0" x2="0" y2="-2.159" width="0.1524" layer="94"/>
-<circle x="0" y="2.159" radius="0.127" width="0.4064" layer="94"/>
-<circle x="0" y="-2.159" radius="0.127" width="0.4064" layer="94"/>
-<text x="3.81" y="2.54" size="1.778" layer="95">&gt;NAME</text>
-<text x="3.81" y="0" size="1.778" layer="96">&gt;VALUE</text>
-<text x="-1.143" y="3.556" size="0.8128" layer="93">D</text>
-<text x="-1.143" y="-4.318" size="0.8128" layer="93">S</text>
-<text x="-4.826" y="-1.778" size="0.8128" layer="93">G</text>
-<rectangle x1="-2.794" y1="-2.794" x2="-2.032" y2="-1.27" layer="94"/>
-<rectangle x1="-2.794" y1="1.27" x2="-2.032" y2="2.794" layer="94"/>
-<rectangle x1="-2.794" y1="-0.889" x2="-2.032" y2="0.889" layer="94"/>
-<pin name="G" x="-5.08" y="-2.54" visible="off" length="point" direction="pas"/>
-<pin name="S" x="0" y="-5.08" visible="off" length="short" direction="pas" rot="R90"/>
-<pin name="D" x="0" y="5.08" visible="off" length="short" direction="pas" rot="R270"/>
-<polygon width="0.1524" layer="94">
-<vertex x="1.27" y="0.508"/>
-<vertex x="0.762" y="-0.254"/>
-<vertex x="1.778" y="-0.254"/>
-</polygon>
-<polygon width="0.1524" layer="94">
-<vertex x="-1.905" y="0"/>
-<vertex x="-0.635" y="-0.508"/>
-<vertex x="-0.635" y="0.508"/>
-</polygon>
-<wire x1="0" y1="0" x2="-0.762" y2="0" width="0.1524" layer="94" style="shortdash"/>
-<wire x1="1.778" y1="0.508" x2="2.032" y2="0.762" width="0.1524" layer="94" style="shortdash"/>
-<wire x1="0.762" y1="0.508" x2="0.508" y2="0.254" width="0.1524" layer="94" style="shortdash"/>
-</symbol>
-</symbols>
-<devicesets>
-<deviceset name="IR2110">
-<description>&lt;B&gt;IR2110&lt;/B&gt;&lt;P&gt;
-High and low side driver.</description>
-<gates>
-<gate name="G$1" symbol="IR2110" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="IR2110">
-<connects>
-<connect gate="G$1" pin="COM" pad="2"/>
-<connect gate="G$1" pin="HIN" pad="10"/>
-<connect gate="G$1" pin="HO" pad="7"/>
-<connect gate="G$1" pin="LIN" pad="12"/>
-<connect gate="G$1" pin="LO" pad="1"/>
-<connect gate="G$1" pin="SD" pad="11"/>
-<connect gate="G$1" pin="VB" pad="6"/>
-<connect gate="G$1" pin="VCC" pad="3"/>
-<connect gate="G$1" pin="VDD" pad="9"/>
-<connect gate="G$1" pin="VS" pad="5"/>
-<connect gate="G$1" pin="VSS" pad="13"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="LP" package="IR2110-LP">
-<connects>
-<connect gate="G$1" pin="COM" pad="2"/>
-<connect gate="G$1" pin="HIN" pad="10"/>
-<connect gate="G$1" pin="HO" pad="7"/>
-<connect gate="G$1" pin="LIN" pad="12"/>
-<connect gate="G$1" pin="LO" pad="1"/>
-<connect gate="G$1" pin="SD" pad="11"/>
-<connect gate="G$1" pin="VB" pad="6"/>
-<connect gate="G$1" pin="VCC" pad="3"/>
-<connect gate="G$1" pin="VDD" pad="9"/>
-<connect gate="G$1" pin="VS" pad="5"/>
-<connect gate="G$1" pin="VSS" pad="13"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="UF4007">
-<gates>
-<gate name="G$1" symbol="UF4007" x="2.54" y="0"/>
-</gates>
-<devices>
-<device name="" package="UF4007">
-<connects>
-<connect gate="G$1" pin="A" pad="A"/>
-<connect gate="G$1" pin="C" pad="C"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="IRF2804">
-<gates>
-<gate name="G$1" symbol="IRF2804" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="IRF2804">
-<connects>
-<connect gate="G$1" pin="D" pad="D"/>
-<connect gate="G$1" pin="G" pad="G"/>
-<connect gate="G$1" pin="S" pad="S"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-</devicesets>
-</library>
-<library name="74xx-eu">
-<description>&lt;b&gt;TTL Devices, 74xx Series with European Symbols&lt;/b&gt;&lt;p&gt;
-Based on the following sources:
-&lt;ul&gt;
-&lt;li&gt;Texas Instruments &lt;i&gt;TTL Data Book&lt;/i&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;Volume 1, 1996.
-&lt;li&gt;TTL Data Book, Volume 2 , 1993
-&lt;li&gt;National Seminconductor Databook 1990, ALS/LS Logic
-&lt;li&gt;ttl 74er digital data dictionary, ECA Electronic + Acustic GmbH, ISBN 3-88109-032-0
-&lt;li&gt;http://icmaster.com/ViewCompare.asp
-&lt;/ul&gt;
-&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
-<packages>
 <package name="DIL14">
 <description>&lt;b&gt;Dual In Line Package&lt;/b&gt;</description>
 <wire x1="8.89" y1="2.921" x2="-8.89" y2="2.921" width="0.1524" layer="21"/>
@@ -12763,12 +12597,75 @@ Based on the following sources:
 </package>
 </packages>
 <symbols>
-<symbol name="PWRN">
-<text x="-0.635" y="-0.635" size="1.778" layer="95">&gt;NAME</text>
-<text x="1.905" y="-5.842" size="1.27" layer="95" rot="R90">GND</text>
-<text x="1.905" y="2.54" size="1.27" layer="95" rot="R90">VCC</text>
-<pin name="GND" x="0" y="-7.62" visible="pad" length="middle" direction="pwr" rot="R90"/>
-<pin name="VCC" x="0" y="7.62" visible="pad" length="middle" direction="pwr" rot="R270"/>
+<symbol name="IR2110">
+<wire x1="-15.24" y1="-15.24" x2="-15.24" y2="15.24" width="0.254" layer="94"/>
+<text x="-15.24" y="16.51" size="1.778" layer="95">&gt;NAME</text>
+<text x="-15.24" y="-17.78" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="HIN" x="-20.32" y="10.16" length="middle" direction="in"/>
+<pin name="SD" x="-20.32" y="-5.08" length="middle" direction="in"/>
+<pin name="LIN" x="-20.32" y="2.54" length="middle" direction="in"/>
+<pin name="VDD" x="-5.08" y="20.32" length="middle" direction="pwr" rot="R270"/>
+<pin name="VCC" x="0" y="20.32" length="middle" direction="pwr" rot="R270"/>
+<pin name="COM" x="0" y="-20.32" length="middle" direction="pwr" rot="R90"/>
+<pin name="VSS" x="-5.08" y="-20.32" length="middle" direction="pwr" rot="R90"/>
+<pin name="VB" x="15.24" y="10.16" length="middle" direction="pwr" rot="R180"/>
+<pin name="VS" x="15.24" y="5.08" length="middle" direction="pwr" rot="R180"/>
+<pin name="HO" x="15.24" y="-2.54" length="middle" direction="out" rot="R180"/>
+<pin name="LO" x="15.24" y="-10.16" length="middle" direction="out" rot="R180"/>
+<wire x1="-15.24" y1="15.24" x2="10.16" y2="15.24" width="0.254" layer="94"/>
+<wire x1="10.16" y1="15.24" x2="10.16" y2="-15.24" width="0.254" layer="94"/>
+<wire x1="10.16" y1="-15.24" x2="-15.24" y2="-15.24" width="0.254" layer="94"/>
+</symbol>
+<symbol name="UF4007">
+<wire x1="-3.81" y1="-1.905" x2="-1.27" y2="0" width="0.254" layer="94"/>
+<wire x1="-1.27" y1="0" x2="-3.81" y2="1.905" width="0.254" layer="94"/>
+<wire x1="-3.81" y1="1.905" x2="-3.81" y2="-1.905" width="0.254" layer="94"/>
+<wire x1="-1.143" y1="1.905" x2="-1.143" y2="-1.905" width="0.254" layer="94"/>
+<text x="-4.8514" y="2.6416" size="1.778" layer="95">&gt;NAME</text>
+<text x="-5.1054" y="-4.4958" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="A" x="-5.08" y="0" visible="off" length="short" direction="pas"/>
+<pin name="C" x="0" y="0" visible="off" length="short" direction="pas" rot="R180"/>
+</symbol>
+<symbol name="IRF2804">
+<wire x1="-3.556" y1="2.54" x2="-3.556" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="-3.556" y1="-2.54" x2="-5.08" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="0" y1="2.54" x2="0" y2="2.159" width="0.1524" layer="94"/>
+<wire x1="-2.032" y1="-2.159" x2="0" y2="-2.159" width="0.1524" layer="94"/>
+<wire x1="0" y1="-2.159" x2="0" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="0.762" y1="0.508" x2="1.27" y2="0.508" width="0.1524" layer="94"/>
+<wire x1="1.27" y1="0.508" x2="1.778" y2="0.508" width="0.1524" layer="94"/>
+<wire x1="1.27" y1="2.159" x2="0" y2="2.159" width="0.1524" layer="94"/>
+<wire x1="0" y1="2.159" x2="-2.0066" y2="2.159" width="0.1524" layer="94"/>
+<wire x1="1.27" y1="0.508" x2="1.27" y2="2.159" width="0.1524" layer="94"/>
+<wire x1="1.27" y1="-2.159" x2="1.27" y2="-0.127" width="0.1524" layer="94"/>
+<wire x1="1.27" y1="-2.159" x2="0" y2="-2.159" width="0.1524" layer="94"/>
+<wire x1="0" y1="0" x2="0" y2="-2.159" width="0.1524" layer="94"/>
+<circle x="0" y="2.159" radius="0.127" width="0.4064" layer="94"/>
+<circle x="0" y="-2.159" radius="0.127" width="0.4064" layer="94"/>
+<text x="3.81" y="2.54" size="1.778" layer="95">&gt;NAME</text>
+<text x="3.81" y="0" size="1.778" layer="96">&gt;VALUE</text>
+<text x="-1.143" y="3.556" size="0.8128" layer="93">D</text>
+<text x="-1.143" y="-4.318" size="0.8128" layer="93">S</text>
+<text x="-4.826" y="-1.778" size="0.8128" layer="93">G</text>
+<rectangle x1="-2.794" y1="-2.794" x2="-2.032" y2="-1.27" layer="94"/>
+<rectangle x1="-2.794" y1="1.27" x2="-2.032" y2="2.794" layer="94"/>
+<rectangle x1="-2.794" y1="-0.889" x2="-2.032" y2="0.889" layer="94"/>
+<pin name="G" x="-5.08" y="-2.54" visible="off" length="point" direction="pas"/>
+<pin name="S" x="0" y="-5.08" visible="off" length="short" direction="pas" rot="R90"/>
+<pin name="D" x="0" y="5.08" visible="off" length="short" direction="pas" rot="R270"/>
+<polygon width="0.1524" layer="94">
+<vertex x="1.27" y="0.508"/>
+<vertex x="0.762" y="-0.254"/>
+<vertex x="1.778" y="-0.254"/>
+</polygon>
+<polygon width="0.1524" layer="94">
+<vertex x="-1.905" y="0"/>
+<vertex x="-0.635" y="-0.508"/>
+<vertex x="-0.635" y="0.508"/>
+</polygon>
+<wire x1="0" y1="0" x2="-0.762" y2="0" width="0.1524" layer="94" style="shortdash"/>
+<wire x1="1.778" y1="0.508" x2="2.032" y2="0.762" width="0.1524" layer="94" style="shortdash"/>
+<wire x1="0.762" y1="0.508" x2="0.508" y2="0.254" width="0.1524" layer="94" style="shortdash"/>
 </symbol>
 <symbol name="7404">
 <wire x1="-5.08" y1="5.08" x2="5.08" y2="0" width="0.4064" layer="94"/>
@@ -12778,6 +12675,13 @@ Based on the following sources:
 <text x="2.54" y="-5.08" size="1.778" layer="96">&gt;VALUE</text>
 <pin name="I" x="-10.16" y="0" visible="pad" length="middle" direction="in"/>
 <pin name="O" x="10.16" y="0" visible="pad" length="middle" direction="out" function="dot" rot="R180"/>
+</symbol>
+<symbol name="PWRN">
+<text x="-0.635" y="-0.635" size="1.778" layer="95">&gt;NAME</text>
+<text x="1.905" y="-5.842" size="1.27" layer="95" rot="R90">GND</text>
+<text x="1.905" y="2.54" size="1.27" layer="95" rot="R90">VCC</text>
+<pin name="GND" x="0" y="-7.62" visible="pad" length="middle" direction="pwr" rot="R90"/>
+<pin name="VCC" x="0" y="7.62" visible="pad" length="middle" direction="pwr" rot="R270"/>
 </symbol>
 <symbol name="7408">
 <wire x1="-2.54" y1="5.08" x2="-2.54" y2="-5.08" width="0.4064" layer="94"/>
@@ -12790,6 +12694,84 @@ Based on the following sources:
 </symbol>
 </symbols>
 <devicesets>
+<deviceset name="IR2110">
+<description>&lt;B&gt;IR2110&lt;/B&gt;&lt;P&gt;
+High and low side driver.</description>
+<gates>
+<gate name="G$1" symbol="IR2110" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="IR2110">
+<connects>
+<connect gate="G$1" pin="COM" pad="2"/>
+<connect gate="G$1" pin="HIN" pad="10"/>
+<connect gate="G$1" pin="HO" pad="7"/>
+<connect gate="G$1" pin="LIN" pad="12"/>
+<connect gate="G$1" pin="LO" pad="1"/>
+<connect gate="G$1" pin="SD" pad="11"/>
+<connect gate="G$1" pin="VB" pad="6"/>
+<connect gate="G$1" pin="VCC" pad="3"/>
+<connect gate="G$1" pin="VDD" pad="9"/>
+<connect gate="G$1" pin="VS" pad="5"/>
+<connect gate="G$1" pin="VSS" pad="13"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="LP" package="IR2110-LP">
+<connects>
+<connect gate="G$1" pin="COM" pad="2"/>
+<connect gate="G$1" pin="HIN" pad="10"/>
+<connect gate="G$1" pin="HO" pad="7"/>
+<connect gate="G$1" pin="LIN" pad="12"/>
+<connect gate="G$1" pin="LO" pad="1"/>
+<connect gate="G$1" pin="SD" pad="11"/>
+<connect gate="G$1" pin="VB" pad="6"/>
+<connect gate="G$1" pin="VCC" pad="3"/>
+<connect gate="G$1" pin="VDD" pad="9"/>
+<connect gate="G$1" pin="VS" pad="5"/>
+<connect gate="G$1" pin="VSS" pad="13"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="UF4007">
+<gates>
+<gate name="G$1" symbol="UF4007" x="2.54" y="0"/>
+</gates>
+<devices>
+<device name="" package="UF4007">
+<connects>
+<connect gate="G$1" pin="A" pad="A"/>
+<connect gate="G$1" pin="C" pad="C"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="IRF2804">
+<gates>
+<gate name="G$1" symbol="IRF2804" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="IRF2804">
+<connects>
+<connect gate="G$1" pin="D" pad="D"/>
+<connect gate="G$1" pin="G" pad="G"/>
+<connect gate="G$1" pin="S" pad="S"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 <deviceset name="74*04" prefix="IC">
 <description>Hex &lt;b&gt;INVERTER&lt;/b&gt;</description>
 <gates>
@@ -12887,6 +12869,27 @@ Based on the following sources:
 <technology name="S"/>
 </technologies>
 </device>
+<device name="LP" package="IR2110-LP">
+<connects>
+<connect gate="A" pin="I" pad="1"/>
+<connect gate="A" pin="O" pad="2"/>
+<connect gate="B" pin="I" pad="3"/>
+<connect gate="B" pin="O" pad="4"/>
+<connect gate="C" pin="I" pad="5"/>
+<connect gate="C" pin="O" pad="6"/>
+<connect gate="D" pin="I" pad="9"/>
+<connect gate="D" pin="O" pad="8"/>
+<connect gate="E" pin="I" pad="11"/>
+<connect gate="E" pin="O" pad="10"/>
+<connect gate="F" pin="I" pad="13"/>
+<connect gate="F" pin="O" pad="12"/>
+<connect gate="P" pin="GND" pad="7"/>
+<connect gate="P" pin="VCC" pad="14"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="74*08" prefix="IC">
@@ -12981,6 +12984,27 @@ Based on the following sources:
 <technology name="HCT"/>
 <technology name="LS"/>
 <technology name="S"/>
+</technologies>
+</device>
+<device name="LP" package="IR2110-LP">
+<connects>
+<connect gate="A" pin="I0" pad="1"/>
+<connect gate="A" pin="I1" pad="2"/>
+<connect gate="A" pin="O" pad="3"/>
+<connect gate="B" pin="I0" pad="4"/>
+<connect gate="B" pin="I1" pad="5"/>
+<connect gate="B" pin="O" pad="6"/>
+<connect gate="C" pin="I0" pad="9"/>
+<connect gate="C" pin="I1" pad="10"/>
+<connect gate="C" pin="O" pad="8"/>
+<connect gate="D" pin="I0" pad="12"/>
+<connect gate="D" pin="I1" pad="13"/>
+<connect gate="D" pin="O" pad="11"/>
+<connect gate="P" pin="GND" pad="7"/>
+<connect gate="P" pin="VCC" pad="14"/>
+</connects>
+<technologies>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -13378,8 +13402,8 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <part name="D3" library="components" deviceset="UF4007" device=""/>
 <part name="R2" library="rcl" deviceset="R-EU_" device="0207/12" value="1k"/>
 <part name="GND3" library="supply1" deviceset="GND" device=""/>
-<part name="IC3" library="74xx-eu" deviceset="74*04" device="N" technology="HC"/>
-<part name="IC4" library="74xx-eu" deviceset="74*08" device="N" technology="HC"/>
+<part name="IC3" library="components" deviceset="74*04" device="LP"/>
+<part name="IC4" library="components" deviceset="74*08" device="LP"/>
 <part name="P+4" library="supply1" deviceset="+5V" device=""/>
 <part name="P+8" library="supply1" deviceset="+12V" device=""/>
 <part name="D7" library="components" deviceset="UF4007" device=""/>
@@ -13444,8 +13468,8 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <instance part="D3" gate="G$1" x="135.89" y="-39.37" rot="R180"/>
 <instance part="R2" gate="G$1" x="153.67" y="-36.83"/>
 <instance part="GND3" gate="1" x="78.74" y="-27.94"/>
-<instance part="IC3" gate="A" x="7.62" y="5.08"/>
-<instance part="IC3" gate="C" x="354.33" y="5.08" rot="R180"/>
+<instance part="IC3" gate="C" x="7.62" y="5.08"/>
+<instance part="IC3" gate="F" x="354.33" y="5.08" rot="R180"/>
 <instance part="IC4" gate="A" x="53.34" y="10.16"/>
 <instance part="IC4" gate="B" x="33.02" y="2.54"/>
 <instance part="IC4" gate="C" x="312.42" y="10.16" rot="R180"/>
@@ -13816,7 +13840,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 </net>
 <net name="N$10" class="0">
 <segment>
-<pinref part="IC3" gate="A" pin="O"/>
+<pinref part="IC3" gate="C" pin="O"/>
 <pinref part="IC4" gate="B" pin="I0"/>
 <wire x1="17.78" y1="5.08" x2="25.4" y2="5.08" width="0.1524" layer="91"/>
 </segment>
@@ -13862,7 +13886,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 </net>
 <net name="A" class="0">
 <segment>
-<pinref part="IC3" gate="A" pin="I"/>
+<pinref part="IC3" gate="C" pin="I"/>
 <wire x1="-2.54" y1="5.08" x2="-5.08" y2="5.08" width="0.1524" layer="91"/>
 <wire x1="-5.08" y1="5.08" x2="-5.08" y2="12.7" width="0.1524" layer="91"/>
 <pinref part="IC4" gate="A" pin="I0"/>
@@ -13880,7 +13904,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 </net>
 <net name="B" class="0">
 <segment>
-<pinref part="IC3" gate="C" pin="I"/>
+<pinref part="IC3" gate="F" pin="I"/>
 <wire x1="364.49" y1="5.08" x2="370.84" y2="5.08" width="0.1524" layer="91"/>
 <wire x1="370.84" y1="5.08" x2="370.84" y2="12.7" width="0.1524" layer="91"/>
 <pinref part="IC4" gate="C" pin="I1"/>
@@ -14090,7 +14114,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <net name="N$17" class="0">
 <segment>
 <pinref part="IC4" gate="D" pin="I1"/>
-<pinref part="IC3" gate="C" pin="O"/>
+<pinref part="IC3" gate="F" pin="O"/>
 <wire x1="339.09" y1="5.08" x2="344.17" y2="5.08" width="0.1524" layer="91"/>
 </segment>
 </net>
