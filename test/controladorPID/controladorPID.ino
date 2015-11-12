@@ -1,10 +1,11 @@
 #include <Encoder.h>
 #include <PID_v1.h>
 #include <ros.h>
-#include <std_msgs/Float64.h>  //Cambiar tipo de datos, al final los mensajes son casi puros int
+#include <std_msgs/Float64.h> //Cambiar tipo de datos, al final los mensajes son casi puros int
+#include <std_msgs/Int32.h>
 
-ros::NodeHandle nh;
-std_msgs::Float64 pos_msg;
+//ros::NodeHandle nh;
+//std_msgs::Int32 pos_msg;
 
 # define MOTOR_CTL1 7
 # define MOTOR_CTL2 8
@@ -12,21 +13,23 @@ std_msgs::Float64 pos_msg;
 # define encoder_channelA 2
 # define encoder_channelB 3
 
+//Sample time ms
+int STime = 20; 
+
 //Defino variables
-double refP,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
-double KpP=4.5, KiP=3.5, KdP=0.1, KpW=3, KiW=1, KdW=0.1;
+double refP = 10*1440,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
+double KpP=1.3, KiP=1, KdP=0.12,KbP = 1, KpW=3, KiW=1, KdW=0.1, KbW = 0;
 long actualPos, auxPos=0;
 
 //Limites
 float Wmax = 255,Vmax; //limitadores para velocidad y voltaje
 
-//Sample time ms
-int STime = 20; 
+
 
 
 //controladores
-PID pidP(&inputP, &outputP, &refP, KpP, KiP, KdP, DIRECT);
-PID pidW(&inputW, &outputW, &refW, KpW, KiW, KdW, DIRECT);
+PID pidP(&inputP, &outputP, &refP, KpP, KiP, KdP, KbP, DIRECT);
+PID pidW(&inputW, &outputW, &refW, KpW, KiW, KdW, KbW, DIRECT);
 
 Encoder encoder(encoder_channelA,encoder_channelB);
 
@@ -38,6 +41,15 @@ void REF(const std_msgs::Float64& setpoint){
 
 void controlP(){
   inputP = encoder.read();
+  
+  if (millis()>20000){
+    refP = 3*1440;
+  }
+  
+  //if (abs(refP-inputP)<1000){
+  //  pidP.SetTunings(4,0.5,1);
+ // }
+  
   pidP.Compute();
   if (outputP<0){
     digitalWrite(MOTOR_CTL1,HIGH);
@@ -48,6 +60,7 @@ void controlP(){
     digitalWrite(MOTOR_CTL2,HIGH);
   }
   analogWrite(MOTOR_PWM,abs(outputP));
+
   //controlW(abs(outputP));
   Serial.println("ref=");
   Serial.println(refP);
@@ -71,8 +84,8 @@ void controlW(double ref){
   
 }
 
-ros::Subscriber<std_msgs::Float64> sub("referencia",&REF);
-ros::Publisher  pub("actual_pos",&pos_msg); 
+//ros::Subscriber<std_msgs::Float64> sub("referencia",&REF);
+//ros::Publisher  pub("actual_pos",&pos_msg); 
   
 void setup(){
   Serial.begin(9600);
@@ -80,9 +93,9 @@ void setup(){
   pinMode ( MOTOR_CTL2 , OUTPUT );
   pinMode ( MOTOR_PWM , OUTPUT );
   
-  nh.initNode();
-  nh.subscribe(sub);
-  nh.advertise(pub);
+  //nh.initNode();
+  //nh.subscribe(sub);
+  //nh.advertise(pub);
   
   pidP.SetMode(AUTOMATIC); 
   //pidW.SetMode(AUTOMATIC); 
@@ -93,9 +106,9 @@ void setup(){
 }
 
 void loop(){
-  pos_msg.data = encoder.read();
-  pub.publish(&pos_msg);
-  nh.spinOnce();
+  //pos_msg.data = encoder.read();
+  //pub.publish(&pos_msg);
+  //nh.spinOnce();
   controlP();
   delay(STime);
 }
