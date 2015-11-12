@@ -4,21 +4,29 @@
 #include <std_msgs/Float64.h> //Cambiar tipo de datos, al final los mensajes son casi puros int
 #include <std_msgs/Int32.h>
 
-//ros::NodeHandle nh;
-//std_msgs::Int32 pos_msg;
+ros::NodeHandle nh;
+std_msgs::Int32 pos_msg;
 
 # define MOTOR_CTL1 7
 # define MOTOR_CTL2 8
-# define MOTOR_PWM 9
+# define MOTOR_PWM 6
 # define encoder_channelA 2
 # define encoder_channelB 3
 
+
+//Probando otro metodo para encoder
+
+//volatile int encoder0Pos = 0;
+//volatile boolean PastA = 0;
+//volatile boolean PastB = 0;
+//
+
 //Sample time ms
-int STime = 20; 
+int STime = 5; 
 
 //Defino variables
-double refP = 10*1440,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
-double KpP=1.3, KiP=1, KdP=0.12,KbP = 1, KpW=3, KiW=1, KdW=0.1, KbW = 0;
+double refP,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
+double KpP=7, KiP=2, KdP=0.1,KbP,KpW=3, KiW=1, KdW=0.1, KbW = 0;
 long actualPos, auxPos=0;
 
 //Limites
@@ -37,14 +45,45 @@ void REF(const std_msgs::Float64& setpoint){
   refP = setpoint.data;
   
 }
+
+void setPwmFrequency(int pin, int divisor) {
+  byte mode;
+  if(pin == 5 || pin == 6 || pin == 9 || pin == 10) {
+    switch(divisor) {
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 64: mode = 0x03; break;
+      case 256: mode = 0x04; break;
+      case 1024: mode = 0x05; break;
+      default: return;
+    }
+    if(pin == 5 || pin == 6) {
+      TCCR0B = TCCR0B & 0b11111000 | mode;
+    } else {
+      TCCR1B = TCCR1B & 0b11111000 | mode;
+    }
+  } else if(pin == 3 || pin == 11) {
+    switch(divisor) {
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 32: mode = 0x03; break;
+      case 64: mode = 0x04; break;
+      case 128: mode = 0x05; break;
+      case 256: mode = 0x06; break;
+      case 1024: mode = 0x7; break;
+      default: return;
+    }
+    TCCR2B = TCCR2B & 0b11111000 | mode;
+  }
+}
   
 
 void controlP(){
   inputP = encoder.read();
   
-  if (millis()>20000){
-    refP = 3*1440;
-  }
+  //if (millis()>20000){
+  //  refP = 0;
+  //}
   
   //if (abs(refP-inputP)<1000){
   //  pidP.SetTunings(4,0.5,1);
@@ -72,9 +111,21 @@ void controlP(){
   Serial.println(outputP);
 }
 
+//encoder2
+//void doEncoderA()
+//{
+//     PastB ? encoder0Pos--:  encoder0Pos++;
+//}
+//
+//void doEncoderB()
+//{
+//     PastB = !PastB; 
+//}
 
+
+//control velocidad
 void controlW(double ref){
-  actualPos = encoder.read();
+  //actualPos = encoder.read();
   refW = ref;
   inputW = (actualPos-auxPos)/(STime/10); //diferencia entre posicion actual y anterior, en un periodo de tiempo igual al muestreo
   pidW.Compute();
@@ -84,8 +135,8 @@ void controlW(double ref){
   
 }
 
-//ros::Subscriber<std_msgs::Float64> sub("referencia",&REF);
-//ros::Publisher  pub("actual_pos",&pos_msg); 
+ros::Subscriber<std_msgs::Float64> sub("referencia",&REF);
+ros::Publisher  pub("actual_pos",&pos_msg); 
   
 void setup(){
   Serial.begin(9600);
@@ -93,9 +144,19 @@ void setup(){
   pinMode ( MOTOR_CTL2 , OUTPUT );
   pinMode ( MOTOR_PWM , OUTPUT );
   
-  //nh.initNode();
-  //nh.subscribe(sub);
-  //nh.advertise(pub);
+  setPwmFrequency(6,64);
+  //encoder2
+//  pinMode(encoder_channelA, INPUT);
+//  pinMode(encoder_channelB, INPUT);
+//  PastA = (boolean)digitalRead(encoder_channelA); //initial value of channel A;
+//  PastB = (boolean)digitalRead(encoder_channelB); 
+//  attachInterrupt(0, doEncoderA, RISING);
+//  attachInterrupt(1, doEncoderB, CHANGE); 
+  
+  
+  nh.initNode();
+  nh.subscribe(sub);
+  nh.advertise(pub);
   
   pidP.SetMode(AUTOMATIC); 
   //pidW.SetMode(AUTOMATIC); 
@@ -106,9 +167,9 @@ void setup(){
 }
 
 void loop(){
-  //pos_msg.data = encoder.read();
-  //pub.publish(&pos_msg);
-  //nh.spinOnce();
+  pos_msg.data = encoder.read();
+  pub.publish(&pos_msg);
+  nh.spinOnce();
   controlP();
   delay(STime);
 }
