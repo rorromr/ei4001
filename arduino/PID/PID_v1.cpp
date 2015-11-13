@@ -20,7 +20,7 @@
 
 
 PID::PID(double* Input, double* Output, double* Setpoint,
-        double Kp, double Ki, double Kd, int ControllerDirection)
+        double Kp, double Ki, double Kd, double Kb, int ControllerDirection)
 {
 	
     myOutput = Output;
@@ -62,9 +62,9 @@ bool PID::Compute()
 
 
       //Anti windup segun controlista
-      if (*myOutput > outMax || *myOutput < outMin){
-       ITerm = 0;
-      }
+      //if (*myOutput > outMax || *myOutput < outMin){
+      //  ITerm = 0;
+      //}
 
       //Anti windup segun libreria
       //if(ITerm > outMax) ITerm= outMax;
@@ -76,14 +76,14 @@ bool PID::Compute()
       double output = kp * error + ITerm- kd * dInput;
 
          //ANti windup alternativo
-/*      if (output > outMax){
-        ITerm-= (output-outMax);
+      if (output > outMax){
+        ITerm-= kb*(output-outMax);
         output = outMax;
       }
       else if (output < outMin){
-        ITerm += outMin-output;
+        ITerm += kb*(outMin-output);
         output = outMin;
-      }*/
+      }
 
       //if(output > outMax){
       //  output = outMax;
@@ -117,6 +117,7 @@ void PID::SetTunings(double Kp, double Ki, double Kd)
    kp = Kp;
    ki = Ki * SampleTimeInSec;
    kd = Kd / SampleTimeInSec;
+   kb = sqrt(ki*kd);
  
   if(controllerDirection ==REVERSE)
    {
