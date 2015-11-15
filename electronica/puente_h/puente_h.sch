@@ -13421,7 +13421,6 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <part name="P+9" library="supply1" deviceset="+5V" device=""/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
 <part name="IN" library="con-phoenix-254" deviceset="MPT2" device=""/>
-<part name="GND7" library="supply1" deviceset="GND" device=""/>
 <part name="C8" library="rcl" deviceset="CPOL-EU" device="E7.5-16" value="2200u"/>
 <part name="MOTOR" library="con-phoenix-254" deviceset="MPT2" device=""/>
 <part name="IC5" library="adum140x" deviceset="ADUM1400" device=""/>
@@ -13439,6 +13438,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <part name="JP1" library="pinhead" deviceset="PINHD-1X6" device=""/>
 <part name="U1" library="components" deviceset="IR2110" device="LP"/>
 <part name="U$1" library="components" deviceset="IR2110" device="LP"/>
+<part name="GND7" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -13492,7 +13492,6 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <instance part="GND5" gate="1" x="181.61" y="-48.26"/>
 <instance part="IN" gate="-1" x="295.91" y="-80.01"/>
 <instance part="IN" gate="-2" x="295.91" y="-85.09"/>
-<instance part="GND7" gate="1" x="290.83" y="-95.25"/>
 <instance part="C8" gate="G$1" x="269.24" y="-85.09"/>
 <instance part="MOTOR" gate="-1" x="184.15" y="-24.13" rot="R270"/>
 <instance part="MOTOR" gate="-2" x="179.07" y="-24.13" rot="R270"/>
@@ -13514,6 +13513,10 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <instance part="JP1" gate="A" x="12.7" y="-76.2" rot="R180"/>
 <instance part="U1" gate="G$1" x="83.82" y="0"/>
 <instance part="U$1" gate="G$1" x="279.4" y="0" rot="MR0"/>
+<instance part="IC3" gate="A" x="10.16" y="38.1"/>
+<instance part="IC3" gate="D" x="10.16" y="25.4"/>
+<instance part="IC3" gate="E" x="10.16" y="50.8"/>
+<instance part="GND7" gate="1" x="-2.54" y="17.78"/>
 </instances>
 <busses>
 </busses>
@@ -13585,17 +13588,6 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <junction x="181.61" y="-40.64"/>
 </segment>
 <segment>
-<pinref part="IN" gate="-2" pin="1"/>
-<pinref part="GND7" gate="1" pin="GND"/>
-<wire x1="293.37" y1="-85.09" x2="290.83" y2="-85.09" width="0.1524" layer="91"/>
-<wire x1="290.83" y1="-85.09" x2="290.83" y2="-91.44" width="0.1524" layer="91"/>
-<pinref part="C8" gate="G$1" pin="-"/>
-<wire x1="290.83" y1="-91.44" x2="290.83" y2="-92.71" width="0.1524" layer="91"/>
-<wire x1="269.24" y1="-90.17" x2="269.24" y2="-91.44" width="0.1524" layer="91"/>
-<wire x1="269.24" y1="-91.44" x2="290.83" y2="-91.44" width="0.1524" layer="91"/>
-<junction x="290.83" y="-91.44"/>
-</segment>
-<segment>
 <pinref part="GND9" gate="1" pin="GND"/>
 <pinref part="IC4" gate="P" pin="GND"/>
 <wire x1="12.7" y1="-43.18" x2="12.7" y2="-40.64" width="0.1524" layer="91"/>
@@ -13618,6 +13610,29 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <wire x1="80.01" y1="-67.31" x2="78.74" y2="-67.31" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="-67.31" x2="78.74" y2="-73.66" width="0.1524" layer="91"/>
 <junction x="78.74" y="-73.66"/>
+</segment>
+<segment>
+<pinref part="IN" gate="-2" pin="1"/>
+<wire x1="293.37" y1="-85.09" x2="290.83" y2="-85.09" width="0.1524" layer="91"/>
+<wire x1="290.83" y1="-85.09" x2="290.83" y2="-91.44" width="0.1524" layer="91"/>
+<pinref part="C8" gate="G$1" pin="-"/>
+<wire x1="269.24" y1="-90.17" x2="269.24" y2="-91.44" width="0.1524" layer="91"/>
+<wire x1="269.24" y1="-91.44" x2="290.83" y2="-91.44" width="0.1524" layer="91"/>
+<label x="287.02" y="-93.98" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="IC3" gate="E" pin="I"/>
+<wire x1="0" y1="50.8" x2="-2.54" y2="50.8" width="0.1524" layer="91"/>
+<wire x1="-2.54" y1="50.8" x2="-2.54" y2="38.1" width="0.1524" layer="91"/>
+<pinref part="IC3" gate="D" pin="I"/>
+<wire x1="-2.54" y1="38.1" x2="-2.54" y2="25.4" width="0.1524" layer="91"/>
+<wire x1="-2.54" y1="25.4" x2="0" y2="25.4" width="0.1524" layer="91"/>
+<pinref part="IC3" gate="A" pin="I"/>
+<wire x1="0" y1="38.1" x2="-2.54" y2="38.1" width="0.1524" layer="91"/>
+<junction x="-2.54" y="38.1"/>
+<wire x1="-2.54" y1="25.4" x2="-2.54" y2="20.32" width="0.1524" layer="91"/>
+<pinref part="GND7" gate="1" pin="GND"/>
+<junction x="-2.54" y="25.4"/>
 </segment>
 </net>
 <net name="VIN" class="0">
@@ -13751,7 +13766,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <pinref part="U1" gate="G$1" pin="VB"/>
 </segment>
 </net>
-<net name="N$3" class="0">
+<net name="POWER-M2" class="0">
 <segment>
 <wire x1="119.38" y1="-19.05" x2="161.29" y2="-19.05" width="0.1524" layer="91"/>
 <pinref part="C5" gate="G$1" pin="2"/>
@@ -13776,6 +13791,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <junction x="161.29" y="-19.05"/>
 <wire x1="161.29" y1="-19.05" x2="161.29" y2="-8.89" width="0.1524" layer="91"/>
 <pinref part="U1" gate="G$1" pin="VS"/>
+<label x="165.1" y="-17.78" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -13954,7 +13970,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <pinref part="U$1" gate="G$1" pin="VB"/>
 </segment>
 </net>
-<net name="N$31" class="0">
+<net name="POWER-M1" class="0">
 <segment>
 <wire x1="243.84" y1="-19.05" x2="201.93" y2="-19.05" width="0.1524" layer="91"/>
 <pinref part="C9" gate="G$1" pin="2"/>
@@ -13979,6 +13995,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <junction x="201.93" y="-19.05"/>
 <wire x1="201.93" y1="-19.05" x2="201.93" y2="-8.89" width="0.1524" layer="91"/>
 <pinref part="U$1" gate="G$1" pin="VS"/>
+<label x="187.96" y="-17.78" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$32" class="0">
@@ -14088,7 +14105,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <pinref part="JP1" gate="A" pin="1"/>
 </segment>
 </net>
-<net name="N$5" class="0">
+<net name="GND-IN" class="0">
 <segment>
 <pinref part="IC5" gate="G$1" pin="GND1@1"/>
 <wire x1="40.64" y1="-73.66" x2="38.1" y2="-73.66" width="0.1524" layer="91"/>
@@ -14101,6 +14118,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <wire x1="38.1" y1="-66.04" x2="38.1" y2="-73.66" width="0.1524" layer="91"/>
 <pinref part="C7" gate="G$1" pin="2"/>
 <pinref part="JP1" gate="A" pin="5"/>
+<label x="30.48" y="-73.66" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$16" class="0">
