@@ -5,7 +5,6 @@ project(bender_torso)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  bender_description
   dynamic_reconfigure
   roscpp
   rospy
