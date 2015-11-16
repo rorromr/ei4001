@@ -6,9 +6,23 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.01" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
+<layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
+<layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
+<layer number="4" name="Route4" color="1" fill="4" visible="no" active="no"/>
+<layer number="5" name="Route5" color="4" fill="4" visible="no" active="no"/>
+<layer number="6" name="Route6" color="1" fill="8" visible="no" active="no"/>
+<layer number="7" name="Route7" color="4" fill="8" visible="no" active="no"/>
+<layer number="8" name="Route8" color="1" fill="2" visible="no" active="no"/>
+<layer number="9" name="Route9" color="4" fill="2" visible="no" active="no"/>
+<layer number="10" name="Route10" color="1" fill="7" visible="no" active="no"/>
+<layer number="11" name="Route11" color="4" fill="7" visible="no" active="no"/>
+<layer number="12" name="Route12" color="1" fill="5" visible="no" active="no"/>
+<layer number="13" name="Route13" color="4" fill="5" visible="no" active="no"/>
+<layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
+<layer number="15" name="Route15" color="4" fill="6" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="no" active="no"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="no" active="no"/>
@@ -12595,6 +12609,21 @@ High and low side driver</description>
 <text x="-4.0051" y="6.065" size="1.778" layer="25">&gt;NAME</text>
 <text x="-3.9751" y="-7.5601" size="1.778" layer="27">&gt;VALUE</text>
 </package>
+<package name="METALTEX-2">
+<text x="-4.318" y="-2.54" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<pad name="P1" x="-2.54" y="1.778" drill="0.9" diameter="3.81" shape="octagon"/>
+<pad name="P2" x="2.54" y="1.778" drill="0.9" diameter="3.81" shape="octagon"/>
+<wire x1="-5.08" y1="5.08" x2="5.08" y2="5.08" width="0.127" layer="21"/>
+<wire x1="5.08" y1="5.08" x2="5.08" y2="-16.51" width="0.127" layer="21"/>
+<wire x1="5.08" y1="-16.51" x2="0" y2="-16.51" width="0.127" layer="21"/>
+<wire x1="0" y1="-16.51" x2="-5.08" y2="-16.51" width="0.127" layer="21"/>
+<wire x1="-5.08" y1="-16.51" x2="-5.08" y2="5.08" width="0.127" layer="21"/>
+<circle x="-2.54" y="-13.97" radius="1.27" width="0.127" layer="21"/>
+<circle x="2.54" y="-13.97" radius="1.27" width="0.127" layer="21"/>
+<wire x1="1.27" y1="-13.97" x2="3.81" y2="-13.97" width="0.127" layer="21"/>
+<wire x1="-3.81" y1="-13.97" x2="-1.27" y2="-13.97" width="0.127" layer="21"/>
+<wire x1="0" y1="-16.51" x2="0" y2="-11.43" width="0.127" layer="21"/>
+</package>
 </packages>
 <symbols>
 <symbol name="IR2110">
@@ -12691,6 +12720,15 @@ High and low side driver</description>
 <pin name="I0" x="-7.62" y="2.54" visible="pad" length="middle" direction="in" swaplevel="1"/>
 <pin name="I1" x="-7.62" y="-2.54" visible="pad" length="middle" direction="in" swaplevel="1"/>
 <pin name="O" x="7.62" y="0" visible="pad" length="middle" direction="out" rot="R180"/>
+</symbol>
+<symbol name="METALTEX-2">
+<wire x1="-0.508" y1="0.762" x2="-2.032" y2="-0.762" width="0.254" layer="94"/>
+<circle x="-1.27" y="0" radius="1.27" width="0.254" layer="94"/>
+<text x="1.016" y="-0.635" size="1.778" layer="95">&gt;NAME</text>
+<wire x1="-0.508" y1="-4.318" x2="-2.032" y2="-5.842" width="0.254" layer="94"/>
+<circle x="-1.27" y="-5.08" radius="1.27" width="0.254" layer="94"/>
+<pin name="P2" x="-7.62" y="-5.08" visible="off" length="middle"/>
+<pin name="P1" x="-7.62" y="0" visible="off" length="middle"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -13009,65 +13047,18 @@ High and low side driver.</description>
 </device>
 </devices>
 </deviceset>
-</devicesets>
-</library>
-<library name="con-phoenix-254">
-<description>&lt;b&gt;Phoenix Connectors&lt;/b&gt;&lt;p&gt;
-Grid 2.54 mm&lt;p&gt;
-&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
-<packages>
-<package name="2POL254">
-<description>&lt;b&gt;PHOENIX CONNECTOR&lt;/b&gt;</description>
-<wire x1="-2.67" y1="-1.45" x2="2.67" y2="-1.45" width="0.254" layer="21"/>
-<wire x1="2.67" y1="-1.45" x2="2.67" y2="1.45" width="0.254" layer="21"/>
-<wire x1="2.67" y1="1.45" x2="-2.67" y2="1.45" width="0.254" layer="21"/>
-<wire x1="-2.67" y1="1.45" x2="-2.67" y2="-1.45" width="0.254" layer="21"/>
-<wire x1="-2.56" y1="1.1" x2="2.56" y2="1.1" width="0.1524" layer="21"/>
-<wire x1="-1.905" y1="-0.508" x2="-0.762" y2="0.635" width="0.1524" layer="51"/>
-<wire x1="0.508" y1="-0.254" x2="2.032" y2="0.127" width="0.1524" layer="51"/>
-<circle x="-1.27" y="0" radius="0.889" width="0.1524" layer="51"/>
-<circle x="1.27" y="0" radius="0.889" width="0.1524" layer="51"/>
-<pad name="1" x="-1.27" y="0" drill="1.2" shape="long" rot="R90"/>
-<pad name="2" x="1.27" y="0" drill="1.2" shape="long" rot="R90"/>
-<text x="-2.794" y="1.778" size="1.27" layer="25">&gt;NAME</text>
-<text x="-2.794" y="-3.048" size="1.27" layer="27">&gt;VALUE</text>
-</package>
-</packages>
-<symbols>
-<symbol name="SKB">
-<wire x1="2.032" y1="0.762" x2="0.508" y2="-0.762" width="0.254" layer="94"/>
-<circle x="1.27" y="0" radius="1.27" width="0.254" layer="94"/>
-<text x="3.556" y="-0.635" size="1.778" layer="95">&gt;NAME</text>
-<pin name="1" x="-2.54" y="0" visible="pad" length="short" direction="pas"/>
-</symbol>
-<symbol name="SKBV">
-<wire x1="2.032" y1="0.762" x2="0.508" y2="-0.762" width="0.254" layer="94"/>
-<circle x="1.27" y="0" radius="1.27" width="0.254" layer="94"/>
-<text x="3.556" y="-0.635" size="1.778" layer="95">&gt;NAME</text>
-<text x="-1.016" y="-3.302" size="1.778" layer="96">&gt;VALUE</text>
-<pin name="1" x="-2.54" y="0" visible="pad" length="short" direction="pas"/>
-</symbol>
-</symbols>
-<devicesets>
-<deviceset name="MPT2" prefix="X" uservalue="yes">
-<description>&lt;b&gt;PHOENIX CONNECTOR&lt;/b&gt;</description>
+<deviceset name="METALTEX-2">
 <gates>
-<gate name="-1" symbol="SKB" x="0" y="0" addlevel="always"/>
-<gate name="-2" symbol="SKBV" x="0" y="-5.08" addlevel="always"/>
+<gate name="G$1" symbol="METALTEX-2" x="0" y="2.54"/>
 </gates>
 <devices>
-<device name="" package="2POL254">
+<device name="" package="METALTEX-2">
 <connects>
-<connect gate="-1" pin="1" pad="1"/>
-<connect gate="-2" pin="1" pad="2"/>
+<connect gate="G$1" pin="P1" pad="P1"/>
+<connect gate="G$1" pin="P2" pad="P2"/>
 </connects>
 <technologies>
-<technology name="">
-<attribute name="MF" value="" constant="no"/>
-<attribute name="MPN" value="" constant="no"/>
-<attribute name="OC_FARNELL" value="unknown" constant="no"/>
-<attribute name="OC_NEWARK" value="unknown" constant="no"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -13420,9 +13411,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <part name="GND6" library="supply1" deviceset="GND" device=""/>
 <part name="P+9" library="supply1" deviceset="+5V" device=""/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
-<part name="IN" library="con-phoenix-254" deviceset="MPT2" device=""/>
 <part name="C8" library="rcl" deviceset="CPOL-EU" device="E7.5-16" value="2200u"/>
-<part name="MOTOR" library="con-phoenix-254" deviceset="MPT2" device=""/>
 <part name="IC5" library="adum140x" deviceset="ADUM1400" device=""/>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
 <part name="P+5" library="supply1" deviceset="+5V" device=""/>
@@ -13439,6 +13428,8 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <part name="U1" library="components" deviceset="IR2110" device="LP"/>
 <part name="U$1" library="components" deviceset="IR2110" device="LP"/>
 <part name="GND7" library="supply1" deviceset="GND" device=""/>
+<part name="CON-IN" library="components" deviceset="METALTEX-2" device=""/>
+<part name="CON-MOTOR" library="components" deviceset="METALTEX-2" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -13490,11 +13481,7 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <instance part="GND6" gate="1" x="284.48" y="-27.94" rot="MR0"/>
 <instance part="P+9" gate="1" x="284.48" y="31.75" rot="MR0"/>
 <instance part="GND5" gate="1" x="181.61" y="-48.26"/>
-<instance part="IN" gate="-1" x="295.91" y="-80.01"/>
-<instance part="IN" gate="-2" x="295.91" y="-85.09"/>
 <instance part="C8" gate="G$1" x="269.24" y="-85.09"/>
-<instance part="MOTOR" gate="-1" x="184.15" y="-24.13" rot="R270"/>
-<instance part="MOTOR" gate="-2" x="179.07" y="-24.13" rot="R270"/>
 <instance part="IC5" gate="G$1" x="55.88" y="-78.74"/>
 <instance part="GND4" gate="1" x="78.74" y="-95.25"/>
 <instance part="P+5" gate="1" x="93.98" y="-64.77"/>
@@ -13517,6 +13504,8 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <instance part="IC3" gate="D" x="10.16" y="25.4"/>
 <instance part="IC3" gate="E" x="10.16" y="50.8"/>
 <instance part="GND7" gate="1" x="-2.54" y="17.78"/>
+<instance part="CON-IN" gate="G$1" x="300.99" y="-80.01"/>
+<instance part="CON-MOTOR" gate="G$1" x="179.07" y="-10.16" rot="R90"/>
 </instances>
 <busses>
 </busses>
@@ -13612,13 +13601,13 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <junction x="78.74" y="-73.66"/>
 </segment>
 <segment>
-<pinref part="IN" gate="-2" pin="1"/>
 <wire x1="293.37" y1="-85.09" x2="290.83" y2="-85.09" width="0.1524" layer="91"/>
 <wire x1="290.83" y1="-85.09" x2="290.83" y2="-91.44" width="0.1524" layer="91"/>
 <pinref part="C8" gate="G$1" pin="-"/>
 <wire x1="269.24" y1="-90.17" x2="269.24" y2="-91.44" width="0.1524" layer="91"/>
 <wire x1="269.24" y1="-91.44" x2="290.83" y2="-91.44" width="0.1524" layer="91"/>
 <label x="287.02" y="-93.98" size="1.778" layer="95"/>
+<pinref part="CON-IN" gate="G$1" pin="P2"/>
 </segment>
 <segment>
 <pinref part="IC3" gate="E" pin="I"/>
@@ -13657,11 +13646,11 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <wire x1="201.93" y1="16.51" x2="201.93" y2="5.08" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="IN" gate="-1" pin="1"/>
 <wire x1="293.37" y1="-80.01" x2="269.24" y2="-80.01" width="0.1524" layer="91"/>
 <pinref part="C8" gate="G$1" pin="+"/>
 <wire x1="269.24" y1="-80.01" x2="269.24" y2="-82.55" width="0.1524" layer="91"/>
 <label x="288.29" y="-78.74" size="1.778" layer="95"/>
+<pinref part="CON-IN" gate="G$1" pin="P1"/>
 </segment>
 </net>
 <net name="+5V" class="0">
@@ -13779,8 +13768,6 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <wire x1="119.38" y1="-19.05" x2="119.38" y2="5.08" width="0.1524" layer="91"/>
 <junction x="119.38" y="5.08"/>
 <junction x="109.22" y="5.08"/>
-<pinref part="MOTOR" gate="-2" pin="1"/>
-<wire x1="179.07" y1="-21.59" x2="179.07" y2="-19.05" width="0.1524" layer="91"/>
 <pinref part="R3" gate="G$1" pin="2"/>
 <pinref part="Q1" gate="G$1" pin="S"/>
 <wire x1="158.75" y1="-8.89" x2="161.29" y2="-8.89" width="0.1524" layer="91"/>
@@ -13792,6 +13779,8 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <wire x1="161.29" y1="-19.05" x2="161.29" y2="-8.89" width="0.1524" layer="91"/>
 <pinref part="U1" gate="G$1" pin="VS"/>
 <label x="165.1" y="-17.78" size="1.778" layer="95"/>
+<pinref part="CON-MOTOR" gate="G$1" pin="P1"/>
+<wire x1="179.07" y1="-19.05" x2="179.07" y2="-17.78" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -13983,8 +13972,6 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <wire x1="243.84" y1="-19.05" x2="243.84" y2="5.08" width="0.1524" layer="91"/>
 <junction x="243.84" y="5.08"/>
 <junction x="254" y="5.08"/>
-<pinref part="MOTOR" gate="-1" pin="1"/>
-<wire x1="184.15" y1="-21.59" x2="184.15" y2="-19.05" width="0.1524" layer="91"/>
 <pinref part="R18" gate="G$1" pin="2"/>
 <pinref part="Q5" gate="G$1" pin="S"/>
 <wire x1="204.47" y1="-8.89" x2="201.93" y2="-8.89" width="0.1524" layer="91"/>
@@ -13996,6 +13983,8 @@ wide body 7.5 mm/JEDEC MS-013AA</description>
 <wire x1="201.93" y1="-19.05" x2="201.93" y2="-8.89" width="0.1524" layer="91"/>
 <pinref part="U$1" gate="G$1" pin="VS"/>
 <label x="187.96" y="-17.78" size="1.778" layer="95"/>
+<pinref part="CON-MOTOR" gate="G$1" pin="P2"/>
+<wire x1="184.15" y1="-19.05" x2="184.15" y2="-17.78" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$32" class="0">
