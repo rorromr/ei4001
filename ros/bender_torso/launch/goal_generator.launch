@@ -1,0 +1,14 @@
+<launch>
+  <!-- Use rqt for visualization and configure -->
+  <arg name="rqt_gui" default="false" />
+  
+  <!-- Goal generator Node -->
+  <node name="goal_generator" pkg="bender_torso" type="goal_generator.py" respawn="false" output="screen">
+    <!-- Remap ouput -->
+    <remap from="cmd" to="cmd"/>
+  </node>
+  
+  <!-- RQT Control perspective -->
+  <node if="$(arg rqt_gui)" name="rqt_command" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find bender_torso)/config/goal_generator.perspective"/>
+  
+</launch>
