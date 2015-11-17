@@ -1,4 +1,4 @@
-#include <Encoder.h>
+#include <SimpleEncoder.h>
 
 // Change these pin numbers to the pins connected to your encoder.
 //   Best Performance: both pins have interrupt capability
@@ -6,13 +6,14 @@
 //   Low Performance:  neither pin has interrupt capability
 Encoder encoder(2, 3);
 //   avoid using pins with LEDs attached
-
+//
 void setup() {
   Serial.begin(9600);
+  encoder.init();
 }
 
 void loop() {
-  long Pos;
+  int32_t Pos;
   Pos = encoder.read();
   Serial.println(Pos);
   delay(100);
