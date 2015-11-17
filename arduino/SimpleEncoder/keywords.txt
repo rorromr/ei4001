@@ -1,4 +1,5 @@
 Encoder	KEYWORD1
-doEncoderA	KEYWORD2
-doEncoderB	KEYWORD2
+encoderA	KEYWORD2
+encoderB	KEYWORD2
+read	KEYWORD2
 

@@ -1,29 +1,37 @@
 #include <SimpleEncoder.h>
 
-Encoder *Encoder_ISR;
+// Active Encoder object for ISR
+Encoder* Encoder::_activeEncoder = NULL; 
 
-Encoder::Encoder(int pin1, int pin2){
-  pinMode(pin1, INPUT);
-  digitalWrite(pin1, HIGH);
-  pinMode(pin2, INPUT);
-  digitalWrite(pin2, HIGH);
-  _PastA = digitalRead(pin1);
-  _PastB = digitalRead(pin2);
-  Encoder_ISR = this;
+Encoder::Encoder(uint8_t pinA, uint8_t pinB){
+  // Config pins
+  pinMode(pinA, INPUT);
+  digitalWrite(pinA, HIGH);
+  pinMode(pinB, INPUT);
+  digitalWrite(pinB, HIGH);
+
+  // Initial state
+  _pastA = digitalRead(pinA);
+  _pastB = digitalRead(pinB);
+  
+  // Set active object
+  _activeEncoder = this;
+  // Config interrupt routines with active object
+  attachInterrupt(0,Encoder::isrEncoderA,RISING);
+  attachInterrupt(1,Encoder::isrEncoderB,CHANGE);
 }
 
-void isr_a()
+void Encoder::encoderA()
 {
-  Encoder_ISR->doEncoderA();
+  _pastB ? _encoderPos--: _encoderPos++;
 }
 
-void isr_b()
+void Encoder::encoderB()
 {
-  Encoder_ISR->doEncoderB();
+  _pastB = !_pastB;
 }
 
-void Encoder::init()
+int32_t Encoder::read()
 {
-  attachInterrupt(0,isr_a,RISING);
-  attachInterrupt(1,isr_b,CHANGE);
+  return _encoderPos;
 }
