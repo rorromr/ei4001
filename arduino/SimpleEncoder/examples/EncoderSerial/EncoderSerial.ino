@@ -7,7 +7,7 @@ void setup() {
   Serial.begin(9600);
 }
 
-uint32_t pos;
+int32_t pos;
 
 void loop() {
   pos = encoder.read();

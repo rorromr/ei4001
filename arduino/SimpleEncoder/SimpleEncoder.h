@@ -10,6 +10,7 @@ private:
   volatile bool _pastA = 0;
   volatile bool _pastB = 0;
   static Encoder* _activeEncoder;
+  int _pin;
   
 public:
   
@@ -22,7 +23,7 @@ public:
   Encoder(uint8_t pinA, uint8_t pinB);
   
   void encoderA();
-  void encoderB();
+  //void encoderB();
 
   /**
    * @brief Interrupt routine for A signal
@@ -36,11 +37,11 @@ public:
   /**
    * @brief Interrupt routine for B signal
    */
-  static inline void isrEncoderB()
-  {
-    if (_activeEncoder)
-      _activeEncoder->encoderB();
-  }
+  // static inline void isrEncoderB()
+  // {
+  //   if (_activeEncoder)
+  //     _activeEncoder->encoderB();
+  // }
 
   /**
    * @brief Read encoder tick
