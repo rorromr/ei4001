@@ -1,0 +1,4 @@
+Encoder	KEYWORD1
+doEncoderA	KEYWORD2
+doEncoderB	KEYWORD2
+
