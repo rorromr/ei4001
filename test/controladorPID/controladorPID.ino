@@ -19,7 +19,7 @@ int STime = 5;
 
 //Defino variables
 double refP,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
-double KpP=7, KiP=2, KdP=0.1,KbP,KpW=3, KiW=1, KdW=0.1, KbW = 0;
+double KpP=1.4, KiP=1.4, KdP=0.1,KbP,KpW=3, KiW=1, KdW=0.1, KbW = 0;
 long actualPos, auxPos=0;
 
 //Limites
