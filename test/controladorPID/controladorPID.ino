@@ -3,6 +3,8 @@
 #include <ros.h>
 #include <std_msgs/Float64.h> //Cambiar tipo de datos, al final los mensajes son casi puros int
 #include <std_msgs/Int32.h>
+#include <bender_control/pid_parameters.h>
+
 
 ros::NodeHandle nh;
 std_msgs::Int32 pos_msg;
@@ -19,7 +21,7 @@ int STime = 5;
 
 //Defino variables
 double refP,inputP,outputP,refW,inputW,outputW; //refP recibe referencia de numero de tics
-double KpP=1.4, KiP=1.4, KdP=0.1,KbP,KpW=3, KiW=1, KdW=0.1, KbW = 0;
+double KpP, KiP = 1, KdP = 0.1,KbP,KpW=3, KiW=1, KdW=0.1, KbW = 0;
 long actualPos, auxPos=0;
 
 //Limites
@@ -36,9 +38,9 @@ Encoder encoder(encoder_channelA,encoder_channelB);
 
 void REF(const std_msgs::Float64& setpoint){
   refP = setpoint.data;
-  
 }
 
+  
 void setPwmFrequency(int pin, int divisor) {
   byte mode;
   if(pin == 5 || pin == 6 || pin == 9 || pin == 10) {
@@ -118,7 +120,7 @@ void controlW(double ref){
   
 }
 
-ros::Subscriber<std_msgs::Float64> sub("cmd",&REF);
+ros::Subscriber<std_msgs::Float64> sub_ref("cmd",&REF);
 ros::Publisher  pub("actual_pos",&pos_msg); 
   
 void setup(){
@@ -130,7 +132,7 @@ void setup(){
   setPwmFrequency(6,64);
   
   nh.initNode();
-  nh.subscribe(sub);
+  nh.subscribe(sub_ref);
   nh.advertise(pub);
   
   pidP.SetMode(AUTOMATIC); 
