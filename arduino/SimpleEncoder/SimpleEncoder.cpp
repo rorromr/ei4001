@@ -38,3 +38,8 @@ int32_t Encoder::read()
 {
   return _encoderPos;
 }
+
+void Encoder::write(int32_t p)
+{
+  _encoderPos = p;
+}
