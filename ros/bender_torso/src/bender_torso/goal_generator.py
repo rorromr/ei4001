@@ -9,7 +9,7 @@ import math
 # ROS
 import rospy
 # Msgs
-from std_msgs.msg import Int32
+from std_msgs.msg import Float64
 # Dynamic reconfigure
 from dynamic_reconfigure.server import Server as DynamicReconfigureServer
 from bender_torso.cfg import GoalGeneratorConfig
@@ -19,7 +19,7 @@ class GoalGenerator():
     self.rate = rospy.Rate(rate)
     self.dt = 1.0/rate;
     self.topic_name = 'cmd'
-    self.pub = rospy.Publisher(self.topic_name, Int32, queue_size = 5)
+    self.pub = rospy.Publisher(self.topic_name, Float64, queue_size = 5)
     # Dynamic reconfigure server, load dinamic parameters
     self.reconfig_server = DynamicReconfigureServer(GoalGeneratorConfig, self.update_params)
     self.value = 0.0
@@ -35,7 +35,7 @@ class GoalGenerator():
     if(self.topic_name != config.topic):
       rospy.loginfo("New config topic {}".format(config.topic))
       self.topic_name = config.topic
-      self.pub = rospy.Publisher(self.topic_name, Int32, queue_size = 5)
+      self.pub = rospy.Publisher(self.topic_name, Float64, queue_size = 5)
     return config
 
   def update_value(self):

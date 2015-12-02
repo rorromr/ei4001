@@ -6,30 +6,41 @@
 class Encoder
 {
 private:
-	volatile int32_t _encoderPos = 0;
-	volatile bool _PastA = 0;
-	volatile bool _PastB = 0;
-	
+  volatile int32_t _encoderPos = 0;
+  volatile bool _pastA = 0;
+  volatile bool _pastB = 0;
+  static Encoder* _activeEncoder;
+  uint8_t _pin;
+  volatile uint8_t* _pinReg;
+  uint8_t _pinMask;
+
+  
 public:
-	Encoder(int pin1, int pin2);
+  
+  /**
+   * @brief Encoder Class
+   * 
+   * @param pinA Signal A pin
+   * @param pinB Signal B pin
+   */
+  Encoder(uint8_t pinA, uint8_t pinB);
+  
+  void encoderA();
 
-	void init();
+  /**
+   * @brief Interrupt routine for A signal
+   */
+  static inline void isrEncoderA()
+  {
+    if (_activeEncoder)
+      _activeEncoder->encoderA();
+  }
 
-	void doEncoderA()
-	{
+  /**
+   * @brief Read encoder tick
+   */
+  int32_t read();
 
-		_PastB ? _encoderPos--: _encoderPos++;
-	}
-
-	void doEncoderB()
-	{
-		_PastB = !_PastB;
-	}
-
-	int32_t read()
-	{
-		return _encoderPos;
-	}
 };
 
 #endif

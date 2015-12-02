@@ -1,29 +1,40 @@
 #include <SimpleEncoder.h>
 
-Encoder *Encoder_ISR;
+#define PIN_TO_BASEREG(pin)             (portInputRegister(digitalPinToPort(pin)))
+#define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
+#define DIRECT_PIN_READ(base, mask)     (((*(base)) & (mask)) ? 1 : 0)
 
-Encoder::Encoder(int pin1, int pin2){
-  pinMode(pin1, INPUT);
-  digitalWrite(pin1, HIGH);
-  pinMode(pin2, INPUT);
-  digitalWrite(pin2, HIGH);
-  _PastA = digitalRead(pin1);
-  _PastB = digitalRead(pin2);
-  Encoder_ISR = this;
+// Active Encoder object for ISR
+Encoder* Encoder::_activeEncoder = NULL; 
+
+Encoder::Encoder(uint8_t pinA, uint8_t pinB):
+  _pin(pinB),
+  _pinReg(PIN_TO_BASEREG(pinB)),
+  _pinMask(PIN_TO_BITMASK(pinB))
+{
+  // Config pins
+  pinMode(pinA, INPUT);
+  digitalWrite(pinA, HIGH);
+  pinMode(pinB, INPUT);
+  digitalWrite(pinB, HIGH);
+
+  // Initial state
+  //_pastA = digitalRead(pinA);
+  _pastB = DIRECT_PIN_READ(_pinReg,_pinMask);
+  
+  // Set active object
+  _activeEncoder = this;
+  // Config interrupt routines with active object
+  attachInterrupt(0,Encoder::isrEncoderA,RISING);
 }
 
-void isr_a()
+void Encoder::encoderA()
 {
-  Encoder_ISR->doEncoderA();
+  _pastB = DIRECT_PIN_READ(_pinReg,_pinMask);
+  _pastB ? _encoderPos--: _encoderPos++;
 }
 
-void isr_b()
+int32_t Encoder::read()
 {
-  Encoder_ISR->doEncoderB();
-}
-
-void Encoder::init()
-{
-  attachInterrupt(0,isr_a,RISING);
-  attachInterrupt(1,isr_b,CHANGE);
+  return _encoderPos;
 }

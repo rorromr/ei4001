@@ -1,4 +1,4 @@
-#include <Encoder.h>
+#include <SimpleEncoder.h>
 #include <PID_v1.h>
 #include <ros.h>
 #include <std_msgs/Float64.h> //Cambiar tipo de datos, al final los mensajes son casi puros int
@@ -13,13 +13,6 @@ std_msgs::Int32 pos_msg;
 # define encoder_channelA 2
 # define encoder_channelB 3
 
-
-//Probando otro metodo para encoder
-
-//volatile int encoder0Pos = 0;
-//volatile boolean PastA = 0;
-//volatile boolean PastB = 0;
-//
 
 //Sample time ms
 int STime = 5; 
@@ -111,16 +104,6 @@ void controlP(){
   Serial.println(outputP);
 }
 
-//encoder2
-//void doEncoderA()
-//{
-//     PastB ? encoder0Pos--:  encoder0Pos++;
-//}
-//
-//void doEncoderB()
-//{
-//     PastB = !PastB; 
-//}
 
 
 //control velocidad
@@ -135,7 +118,7 @@ void controlW(double ref){
   
 }
 
-ros::Subscriber<std_msgs::Float64> sub("referencia",&REF);
+ros::Subscriber<std_msgs::Float64> sub("cmd",&REF);
 ros::Publisher  pub("actual_pos",&pos_msg); 
   
 void setup(){
@@ -145,14 +128,6 @@ void setup(){
   pinMode ( MOTOR_PWM , OUTPUT );
   
   setPwmFrequency(6,64);
-  //encoder2
-//  pinMode(encoder_channelA, INPUT);
-//  pinMode(encoder_channelB, INPUT);
-//  PastA = (boolean)digitalRead(encoder_channelA); //initial value of channel A;
-//  PastB = (boolean)digitalRead(encoder_channelB); 
-//  attachInterrupt(0, doEncoderA, RISING);
-//  attachInterrupt(1, doEncoderB, CHANGE); 
-  
   
   nh.initNode();
   nh.subscribe(sub);
