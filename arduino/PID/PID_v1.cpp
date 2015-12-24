@@ -159,7 +159,9 @@ void PID::SetOutputLimits(double Min, double Max)
    if(inAuto)
    {
 	   if(*myOutput > outMax) *myOutput = outMax;
-	   else if(*myOutput < outMin) *myOutput = outMin;
+     else if(*myOutput < outMin & *myOutput >0) *myOutput = 0;
+	   else if(*myOutput > -outMin & *myOutput < 0) *myOutput = 0;
+     else if(*myOutput < -outMax) *myOutput = -outMax;
 	 
 	   if(ITerm > outMax) ITerm= outMax;
 	   else if(ITerm < outMin) ITerm= outMin;
