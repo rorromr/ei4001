@@ -49,7 +49,7 @@ PID::PID(double* Input, double* Output, double* Setpoint,
  **********************************************************************************/ 
 bool PID::Compute()
 {
-   if(!inAuto) return false;
+   //if(!inAuto) return false;
    unsigned long now = millis();
    unsigned long timeChange = (now - lastTime);
    if(timeChange>=SampleTime)
@@ -58,7 +58,8 @@ bool PID::Compute()
 	    double input = *myInput;
       double error = *mySetpoint - input;
       ITerm+= (ki * error);
-
+      Serial.print("Error ");
+      Serial.print(error);
 
 
       //Anti windup segun controlista
