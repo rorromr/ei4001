@@ -8,6 +8,6 @@ if [ ! -d ~/Arduino/libraries/ ]; then
   echo "${red}Arduino libraries directory ~/Arduino/libraries/ not found...${reset}"
 else
   echo "${bold}Deleting Arduino ROS libraries...${reset}"
-  rm -rf ~/Arduino/libraries
+  rm -rf ~/Arduino/libraries/ros_lib
   rosrun rosserial_arduino make_libraries.py ~/Arduino/libraries/
 fi

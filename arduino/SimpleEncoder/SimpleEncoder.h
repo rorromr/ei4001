@@ -41,6 +41,10 @@ public:
    */
   int32_t read();
 
+  void write(int32_t p);
+
 };
+
+
 
 #endif

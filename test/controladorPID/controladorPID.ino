@@ -7,8 +7,9 @@
 #include <EEPROM.h>
 #include <SimpleTimer.h>
 
-//ros::NodeHandle nh;
-//std_msgs::Int32 pos_msg;
+
+ros::NodeHandle nh;
+std_msgs::Int32 pos_msg;
 
 # define MOTOR_CTL1 7
 # define MOTOR_CTL2 8
@@ -29,11 +30,11 @@ int STime = 5;
 
 //Defino variables
 double refP,inputP,outputP; //refP recibe referencia de numero de tics
-double KpP = 1.5, KiP = 1, KdP = 0.01;
+double KpP, KiP, KdP;
 long actualPos, auxPos=0;
 
 //Limites
-float Wmax = 255,Wmin = 255*0.2; //limitadores para velocidad y voltaje
+float Wmax = 255,Vmax; //limitadores para velocidad y voltaje
 int pose_max,pose_min = 0; //limites en que puede andar bendercillo, seteada en tics. 1 vuelta son 360 tics
 
 //controladores
@@ -47,7 +48,7 @@ Encoder encoder(encoder_channelA,encoder_channelB);
 
 
 //Clase Timer
-//SimpleTimer timer_savePosition;
+SimpleTimer timer_savePosition;
 SimpleTimer timer_publicador;
 
 
@@ -59,13 +60,12 @@ SimpleTimer timer_publicador;
 void REF(const std_msgs::Float64& setpoint){
   pidP.SetMode(AUTOMATIC);
   refP = setpoint.data;
-  
-//  if (refP > pose_max){
-//    refP = pose_max;
-//  }
-//  else if (refP < pose_min){
-//    refP = pose_min;
-//  }
+  if (refP > pose_max){
+    refP = pose_max;
+  }
+  else if (refP < pose_min){
+    refP = pose_min;
+  }
 }
 
 
@@ -73,13 +73,9 @@ void REF(const std_msgs::Float64& setpoint){
 
 
 void PAR(const bender_torso::TorsoParams& constantes){
-  pidP.SetMode(AUTOMATIC);
-  if (KpP != constantes.kp | KiP != constantes.ki | KdP != constantes.kd){
-    KpP = constantes.kp;
-    KiP = constantes.ki;
-    KdP = constantes.kd;
-    pidP.SetTunings(KpP,KiP,KdP);
-  }
+  KpP = constantes.kp;
+  KiP = constantes.ki;
+  KdP = constantes.kd;
 }
 
 
@@ -206,16 +202,16 @@ long readPosition(){
 
 
 //Publisher y Subscriber
-//ros::Subscriber<std_msgs::Float64> sub_ref("cmd",&REF);
-//ros::Subscriber<bender_torso::TorsoParams> sub_parameters("parameters",&PAR);
-//ros::Publisher  pub("actual_pos",&pos_msg); 
+ros::Subscriber<std_msgs::Float64> sub_ref("cmd",&REF);
+ros::Subscriber<bender_torso::TorsoParams> sub_parameters("parameters",&PAR);
+ros::Publisher  pub("actual_pos",&pos_msg); 
 
 //Publico a ROS posicion actual
-//void publicador(){
-//  pos_msg.data = encoder.read();
-//  pub.publish(&pos_msg);
-//  nh.spinOnce();
-//}
+void publicador(){
+  pos_msg.data = encoder.read();
+  pub.publish(&pos_msg);
+  nh.spinOnce();
+}
 
 
 
@@ -231,18 +227,17 @@ void setup(){
   pinMode (fdc_3,INPUT);
   pinMode (fdc_4,INPUT);
   
-  //attachInterrupt(1,calibrate,RISING);//Interrupcion cuando se aprieta fin de carrera
+  attachInterrupt(0,calibrate,RISING);//Interrupcion cuando se aprieta fin de carrera
   
   setPwmFrequency(6,64); //Pin 6, divido frecuencia base 62,5 Khz por 64
   
-//  nh.initNode();
-//  nh.subscribe(sub_ref);
-//  nh.subscribe(sub_parameters);
-//  nh.advertise(pub);
-
+  nh.initNode();
+  nh.subscribe(sub_ref);
+  nh.subscribe(sub_parameters);
+  nh.advertise(pub);
+  
   pidP.SetSampleTime(STime);
   pidP.SetOutputLimits(-Wmax,Wmax);
-  pidP.SetMode(AUTOMATIC);
   
   //Timers para llamar funciones
   //timer_savePosition.setInterval(1000,savePosition);
@@ -255,7 +250,8 @@ void setup(){
 void loop(){
   //timer_savePosition.run();
   timer_publicador.run();
-  controlP();
+  nh.spinOnce();
+  controlP(); //No sera mejor hacerle un timer o llamarla cuando yo quiera? duda
   
   delay(STime);
 }

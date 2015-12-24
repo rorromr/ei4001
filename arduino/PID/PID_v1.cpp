@@ -20,7 +20,7 @@
 
 
 PID::PID(double* Input, double* Output, double* Setpoint,
-        double Kp, double Ki, double Kd, double Kb, int ControllerDirection)
+        double Kp, double Ki, double Kd, int ControllerDirection)
 {
 	
     myOutput = Output;
@@ -32,7 +32,7 @@ PID::PID(double* Input, double* Output, double* Setpoint,
 												//the arduino pwm limits
 
     SampleTime = 100;							//default Controller Sample Time is 0.1 seconds
-
+    //ITerm = 0;
 
     PID::SetControllerDirection(ControllerDirection);
     PID::SetTunings(Kp, Ki, Kd);
@@ -49,7 +49,7 @@ PID::PID(double* Input, double* Output, double* Setpoint,
  **********************************************************************************/ 
 bool PID::Compute()
 {
-   if(!inAuto) return false;
+   //if(!inAuto) return false;
    unsigned long now = millis();
    unsigned long timeChange = (now - lastTime);
    if(timeChange>=SampleTime)
@@ -58,13 +58,17 @@ bool PID::Compute()
 	    double input = *myInput;
       double error = *mySetpoint - input;
       ITerm+= (ki * error);
-
+      Serial.print("Error ");
+      Serial.print(error);
 
 
       //Anti windup segun controlista
-      //if (*myOutput > outMax || *myOutput < outMin){
-      //  ITerm = 0;
-      //}
+      // if (*myOutput > outMax || *myOutput < outMin){
+      //   ITerm = ITerm;
+      // }
+      // else{
+      //   ITerm+= (ki * error);
+      // }
 
       //Anti windup segun libreria
       //if(ITerm > outMax) ITerm= outMax;
@@ -76,21 +80,21 @@ bool PID::Compute()
       double output = kp * error + ITerm- kd * dInput;
 
          //ANti windup alternativo
-      if (output > outMax){
-        ITerm-= kb*(output-outMax);
-        output = outMax;
-      }
-      else if (output < outMin){
-        ITerm += kb*(outMin-output);
-        output = outMin;
-      }
+       if (output > outMax){
+         ITerm-= kb*(output-outMax);
+         output = outMax;
+       }
+       else if (output < outMin){
+         ITerm += kb*(outMin-output);
+         output = outMin;
+       }
 
-      //if(output > outMax){
-      //  output = outMax;
-      //}
-      //else if(output < outMin){
-      //  output = outMin;
-      //}
+      // if(output > outMax){
+      //   output = outMax;
+      // }
+      // else if(output < outMin){
+      //   output = outMin;
+      // }
 	     *myOutput = output;
 	  
       /*Remember some variables for next time*/
@@ -141,6 +145,21 @@ void PID::SetSampleTime(int NewSampleTime)
       SampleTime = (unsigned long)NewSampleTime;
    }
 }
+
+/* Check(...) *********************************************************
+ * Check if controller is in "dead zone". If that happens, desactivate PID  
+ ******************************************************************************/
+void PID::Check()
+{
+  if (abs(*mySetpoint-*myInput) < 5){
+    *myOutput = 0;
+    PID::SetMode(MANUAL);
+  }
+  else
+    PID::Compute();
+
+}
+
  
 /* SetOutputLimits(...)****************************************************
  *     This function will be used far more often than SetInputLimits.  while

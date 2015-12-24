@@ -1,16 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
 bold=$(tput bold)
 red=${bold}$(tput setaf 1)
 reset=$(tput sgr0)
+
+libs=("SerialDXL" "Encoder" "PID" "HBridge")
 
 if [ ! -d ~/Arduino/libraries/ ]; then
   echo "${red}Arduino libraries directory not found...${reset}"
 else
   echo "${bold}Installing Arduino libraries...${reset}"
   current_dir=${PWD}
-  ln -s "${current_dir}/SerialDXL" ~/Arduino/libraries/SerialDXL
-  ln -s "${current_dir}/Encoder" ~/Arduino/libraries/Encoder
-  ln -s "${current_dir}/PID" ~/Arduino/libraries/PID
+  for i in "${libs[@]}"
+  do
+    echo "Installing ${i}"
+    ln -s ${current_dir}/${i} ~/Arduino/libraries/${i}
+  done
 fi
 
