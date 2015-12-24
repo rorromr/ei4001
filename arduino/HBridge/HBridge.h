@@ -31,6 +31,8 @@ public:
 
   void setPwm(uint8_t pwm);
 
+  void set(int16_t target);
+
 
 };
 

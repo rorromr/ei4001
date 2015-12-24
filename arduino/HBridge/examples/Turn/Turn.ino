@@ -4,7 +4,7 @@
 HBridge hbridge(6, 7, 8);
 
 void setup() {
-  Serial.begin(9600);
+	Serial.begin(9600);
 }
 
 void loop() {
