@@ -43,6 +43,9 @@ class PID
                                           //   the PID calculation is performed.  default is 100
 
     void Check();
+
+    void setDeadZone(double error);
+    void enableDeadZone(bool enable);
 										  
 										  
 										  
@@ -78,6 +81,10 @@ class PID
 	unsigned long SampleTime;
 	double outMin, outMax;
 	bool inAuto;
+
+  // Dead Zone
+  double deadZone_;
+  bool deadZoneEn_;
 };
 #endif
 

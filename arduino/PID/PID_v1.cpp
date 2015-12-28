@@ -20,7 +20,8 @@
 
 
 PID::PID(double* Input, double* Output, double* Setpoint,
-        double Kp, double Ki, double Kd, int ControllerDirection)
+        double Kp, double Ki, double Kd, int ControllerDirection):
+  deadZoneEn_(false)
 {
 	
     myOutput = Output;
@@ -37,7 +38,8 @@ PID::PID(double* Input, double* Output, double* Setpoint,
     PID::SetControllerDirection(ControllerDirection);
     PID::SetTunings(Kp, Ki, Kd);
 
-    lastTime = millis()-SampleTime;				
+    lastTime = millis()-SampleTime;
+
 }
  
  
@@ -57,18 +59,19 @@ bool PID::Compute()
       /*Compute all the working error variables*/
 	    double input = *myInput;
       double error = *mySetpoint - input;
+
       ITerm+= (ki * error);
       Serial.print("Error ");
       Serial.print(error);
 
 
       //Anti windup segun controlista
-      // if (*myOutput > outMax || *myOutput < outMin){
-      //   ITerm = ITerm;
-      // }
-      // else{
-      //   ITerm+= (ki * error);
-      // }
+      if (*myOutput > outMax || *myOutput < outMin){
+        ITerm = ITerm;
+      }
+      else{
+        ITerm+= (ki * error);
+      }
 
       //Anti windup segun libreria
       //if(ITerm > outMax) ITerm= outMax;
@@ -80,14 +83,14 @@ bool PID::Compute()
       double output = kp * error + ITerm- kd * dInput;
 
          //ANti windup alternativo
-       if (output > outMax){
+/*       if (output > outMax){
          ITerm-= kb*(output-outMax);
          output = outMax;
        }
        else if (output < outMin){
          ITerm += kb*(outMin-output);
          output = outMin;
-       }
+       }*/
 
       // if(output > outMax){
       //   output = outMax;
@@ -95,8 +98,17 @@ bool PID::Compute()
       // else if(output < outMin){
       //   output = outMin;
       // }
-	     *myOutput = output;
-	  
+      
+      // Dead zone
+      if (deadZoneEn_ && (error < deadZone_ && error > -deadZone_))
+      {
+        *myOutput = 0;
+      }
+      else
+      {
+        *myOutput = output;
+      }
+
       /*Remember some variables for next time*/
       lastInput = input;
       lastTime = now;
@@ -160,6 +172,16 @@ void PID::Check()
 
 }
 
+
+void PID::setDeadZone(double error)
+{
+  deadZone_ = error;
+}
+
+void PID::enableDeadZone(bool enable)
+{
+  deadZoneEn_ = enable;
+}
  
 /* SetOutputLimits(...)****************************************************
  *     This function will be used far more often than SetInputLimits.  while

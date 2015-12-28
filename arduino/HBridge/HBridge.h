@@ -33,6 +33,8 @@ public:
 
   void set(int16_t target);
 
+  void setPwmFrequency(int divisor);
+
 
 };
 
