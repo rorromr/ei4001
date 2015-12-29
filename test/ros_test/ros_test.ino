@@ -4,6 +4,7 @@
 #include <SimpleTimer.h>
 // ROS Libs
 #include <std_msgs/Int32.h>
+#include <std_msgs/Float64.h>
 #include <ros.h>
 
 // Constants
@@ -30,10 +31,16 @@ HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
 uint8_t k1 = 0, k1f = 0;
 uint8_t k2 = 0, k2f = 0;
 
+void cmdCb( const std_msgs::Float64& cmd)
+{
+  refP = cmd.data;
+}
+
 // ROS
 ros::NodeHandle nh;
 std_msgs::Int32 posMsg;
-ros::Publisher pub("torso_state", &posMsg); 
+ros::Publisher pub("torso_state", &posMsg);
+ros::Subscriber<std_msgs::Float64>subCmd("torso_cmd",&cmdCb);
 
 
 // Position publisher timer callback
@@ -79,7 +86,7 @@ void setup(){
   */
   nh.initNode();
   nh.advertise(pub);
-
+  nh.subscribe(subCmd);
 }
 
 void loop(){

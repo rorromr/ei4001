@@ -15,14 +15,15 @@ from dynamic_reconfigure.server import Server as DynamicReconfigureServer
 from bender_torso.cfg import GoalGeneratorConfig
 
 class GoalGenerator():
-  def __init__(self, rate = 20):
+  def __init__(self, rate = 10):
     self.rate = rospy.Rate(rate)
     self.dt = 1.0/rate;
     self.topic_name = 'cmd'
     self.pub = rospy.Publisher(self.topic_name, Float64, queue_size = 5)
+    self.value = 0.0
+    self.pub_en = False
     # Dynamic reconfigure server, load dinamic parameters
     self.reconfig_server = DynamicReconfigureServer(GoalGeneratorConfig, self.update_params)
-    self.value = 0.0
     
   def update_params(self, config, level):
     # Update params
@@ -32,6 +33,14 @@ class GoalGenerator():
     self.type = config.type
     self.sat_en = config.sat_en
     self.sat = config.sat
+    # Config publish enable
+    if (self.pub_en != config.pub_en):
+      if (self.pub_en and not config.pub_en):
+        rospy.loginfo("Shutting down publisher")
+      else:
+        rospy.loginfo("Turning on publisher")
+    self.pub_en = config.pub_en
+    # Config publisher
     if(self.topic_name != config.topic):
       rospy.loginfo("New config topic {}".format(config.topic))
       self.topic_name = config.topic
@@ -67,12 +76,13 @@ class GoalGenerator():
   def run(self):
     while not rospy.is_shutdown():
       self.update_value()
-      self.pub.publish(data=self.value)
+      if self.pub_en:
+        self.pub.publish(data=self.value)
       self.rate.sleep()
 
 def main():
   rospy.init_node('goal_generator')
-  generator = GoalGenerator(rate = 20)
+  generator = GoalGenerator(rate = 10)
   rospy.loginfo('Running GoalGenerator in topic: {}'.format(generator.topic_name))
   generator.run()
 

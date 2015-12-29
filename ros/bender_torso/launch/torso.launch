@@ -13,7 +13,4 @@
     <param name="rate" value="10" />
   </node>
 
-  <!-- Rviz and URDF -->
-  <include file="$(find bender_description)/launch/display.launch"/>
-
 </launch>
