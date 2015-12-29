@@ -12,7 +12,9 @@
 #endif
 
 #include <PID_v1.h>
+
 //#define DEBUG
+#undef DEBUG 
 
 /*Constructor (...)*********************************************************
  *    The parameters specified here are those for for which we can't set up 

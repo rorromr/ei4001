@@ -4,11 +4,12 @@
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_PIN_READ(base, mask)     (((*(base)) & (mask)) ? 1 : 0)
 
-#define PWM_MAX 200
+#define PWM_MAX 35
 #define PWM_MIN 25
 #define SAT(x) ( ((x) > PWM_MAX) ? PWM_MAX : ( ((x) < PWM_MIN) ? 0 : (x) ) )
 
 //#define DEBUG
+#undef DEBUG
 
 HBridge::HBridge(uint8_t pinPwm, uint8_t pinA, uint8_t pinB):
   _pinPwm(pinPwm),
