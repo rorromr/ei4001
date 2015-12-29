@@ -10,7 +10,7 @@
 
 // PID
 double refP,inputP,outputP; //refP recibe referencia de numero de tics
-double KpP = 1.3, KiP=1.0, KdP=0.005;
+double KpP = 0.11, KiP=0.05, KdP=0.007;
 
 //controladores
 PID pidP(&inputP, &outputP, &refP, KpP, KiP, KdP, DIRECT);
@@ -21,7 +21,10 @@ Encoder encoder(ENCODER_A, ENCODER_B);
 // H bridge class
 HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
 
-  
+// Buttons
+uint8_t k1 = 0, k1f = 0;
+uint8_t k2 = 0, k2f = 0;
+
 void setup(){
   Serial.begin(9600);
   
@@ -31,14 +34,28 @@ void setup(){
   pidP.SetOutputLimits(-255,255);
   pidP.setDeadZone(30);
   pidP.enableDeadZone(true);
-  refP = 1800;
+  refP = 5000;
+
+  // Buttons
+  pinMode(9, INPUT_PULLUP);
+  pinMode(10, INPUT_PULLUP);
 }
 
 void loop(){
   inputP = encoder.read();
   pidP.Compute();
   hbridge.set((int16_t) outputP);
-  Serial.print("| Out ");
-  Serial.println(outputP);
-  delay(5);
+  //Serial.print("| Out ");
+  //Serial.println(outputP);
+  //delay(1);
+
+  // Falling edge K1
+  k1f = k1;
+  k1 = digitalRead(9);
+  if (k1f == HIGH && k1 == LOW) refP += 800;
+
+  // Falling edge K2
+  k2f = k2;
+  k2 = digitalRead(10);
+  if (k2f == HIGH && k2 == LOW) refP -= 800;
 }

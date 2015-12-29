@@ -12,6 +12,7 @@
 #endif
 
 #include <PID_v1.h>
+//#define DEBUG
 
 /*Constructor (...)*********************************************************
  *    The parameters specified here are those for for which we can't set up 
@@ -61,9 +62,10 @@ bool PID::Compute()
       double error = *mySetpoint - input;
 
       ITerm+= (ki * error);
+      #ifdef DEBUG
       Serial.print("Error ");
       Serial.print(error);
-
+      #endif
 
       //Anti windup segun controlista
       if (*myOutput > outMax || *myOutput < outMin){
@@ -103,6 +105,7 @@ bool PID::Compute()
       if (deadZoneEn_ && (error < deadZone_ && error > -deadZone_))
       {
         *myOutput = 0;
+        ITerm = 0;
       }
       else
       {
