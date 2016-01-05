@@ -4,7 +4,7 @@ bold=$(tput bold)
 red=${bold}$(tput setaf 1)
 reset=$(tput sgr0)
 
-libs=("SerialDXL" "Encoder" "PID" "HBridge")
+libs=("SerialDXL" "Encoder" "PID" "HBridge" "Control")
 
 if [ ! -d ~/Arduino/libraries/ ]; then
   echo "${red}Arduino libraries directory not found...${reset}"
@@ -13,8 +13,15 @@ else
   current_dir=${PWD}
   for i in "${libs[@]}"
   do
-    echo "Installing ${i}"
-    ln -s ${current_dir}/${i} ~/Arduino/libraries/${i}
+    if [ ! -d ~/Arduino/libraries/${i} ]; then
+      echo "Installing ${i}"
+      ln -s ${current_dir}/${i} ~/Arduino/libraries/${i}
+    else
+      echo "${red}Deleting ${i}${reset}"
+      rm -rf ~/Arduino/libraries/${i}
+      echo "Installing ${i}"
+      ln -s ${current_dir}/${i} ~/Arduino/libraries/${i}
+    fi
   done
 fi
 
