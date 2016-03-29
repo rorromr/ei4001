@@ -24,6 +24,131 @@
 #include <util/atomic.h>
 #include <string.h>
 //------------------------------------------------------------------------------
+// Serial registers
+#if defined(UCSR3A)
+static const uint8_t SERIAL_PORT_COUNT = 4;
+#elif defined(UCSR2A)
+static const uint8_t SERIAL_PORT_COUNT = 3;
+#elif defined(UCSR1A)
+static const uint8_t SERIAL_PORT_COUNT = 2;
+#elif defined(UCSR0A) || defined(UCSRA)
+static const uint8_t SERIAL_PORT_COUNT = 1;
+#else
+#error no serial ports.
+#endif
+//------------------------------------------------------------------------------
+#ifdef UCSR0A
+// Bits in UCSRA.
+static const uint8_t M_RXC  = 1 << RXC0;
+static const uint8_t M_TXC  = 1 << TXC0;
+static const uint8_t M_UDRE = 1 << UDRE0;
+static const uint8_t M_FE   = 1 << FE0;
+static const uint8_t M_DOR  = 1 << DOR0;
+static const uint8_t M_UPE  = 1 << UPE0;
+static const uint8_t M_U2X  = 1 << U2X0;
+// Bits in UCSRB.
+static const uint8_t M_RXCIE = 1 << RXCIE0;
+static const uint8_t M_TXCIE = 1 << TXCIE0;
+static const uint8_t M_UDRIE = 1 << UDRIE0;
+static const uint8_t M_RXEN  = 1 << RXEN0;
+static const uint8_t M_TXEN  = 1 << TXEN0;
+// Bits in UCSRC.
+static const uint8_t M_UPM0 = 1 << UPM00;
+static const uint8_t M_UPM1 = 1 << UPM01;
+static const uint8_t M_USBS = 1 << USBS0;
+static const uint8_t M_UCSZ0 = 1 << UCSZ00;
+static const uint8_t M_UCSZ1 = 1 << UCSZ01;
+#elif defined(UCSRA)  // UCSR0A
+// Bits in UCSRA.
+static const uint8_t M_RXC  = 1 << RXC;
+static const uint8_t M_TXC  = 1 << TXC;
+static const uint8_t M_UDRE = 1 << UDRE;
+static const uint8_t M_FE   = 1 << FE;
+static const uint8_t M_DOR  = 1 << DOR;
+static const uint8_t M_UPE  = 1 << PE;
+static const uint8_t M_U2X  = 1 << U2X;
+// Bits in UCSRB.
+static const uint8_t M_RXCIE = 1 << RXCIE;
+static const uint8_t M_TXCIE = 1 << TXCIE;
+static const uint8_t M_UDRIE = 1 << UDRIE;
+static const uint8_t M_RXEN  = 1 << RXEN;
+static const uint8_t M_TXEN  = 1 << TXEN;
+// Bits in UCSRC.
+static const uint8_t M_UPM0 = 1 << UPM0;
+static const uint8_t M_UPM1 = 1 << UPM1;
+static const uint8_t M_USBS = 1 << USBS;
+static const uint8_t M_UCSZ0 = 1 << UCSZ0;
+static const uint8_t M_UCSZ1 = 1 << UCSZ1;
+#elif defined(UCSR1A)  // UCSR0A
+// Bits in UCSRA.
+static const uint8_t M_RXC  = 1 << RXC1;
+static const uint8_t M_TXC  = 1 << TXC1;
+static const uint8_t M_UDRE = 1 << UDRE1;
+static const uint8_t M_FE   = 1 << FE1;
+static const uint8_t M_DOR  = 1 << DOR1;
+static const uint8_t M_UPE  = 1 << UPE1;
+static const uint8_t M_U2X  = 1 << U2X1;
+// Bits in UCSRB.
+static const uint8_t M_RXCIE = 1 << RXCIE1;
+static const uint8_t M_TXCIE = 1 << TXCIE1;
+static const uint8_t M_UDRIE = 1 << UDRIE1;
+static const uint8_t M_RXEN  = 1 << RXEN1;
+static const uint8_t M_TXEN  = 1 << TXEN1;
+// Bits in UCSRC.
+static const uint8_t M_UPM0 = 1 << UPM10;
+static const uint8_t M_UPM1 = 1 << UPM11;
+static const uint8_t M_USBS = 1 << USBS1;
+static const uint8_t M_UCSZ0 = 1 << UCSZ10;
+static const uint8_t M_UCSZ1 = 1 << UCSZ11;
+#else  // UCSR0A
+#error no serial ports
+#endif  // UCSR0A
+//------------------------------------------------------------------------------
+/**
+ * @class UsartRegister
+ * @brief Addresses of USART registers.
+ */
+struct UsartRegister {
+  volatile uint8_t* ucsra;  /**< USART Control and Status Register A. */
+  volatile uint8_t* ucsrb;  /**< USART Control and Status Register B. */
+  volatile uint8_t* ucsrc;  /**< USART Control and Status Register C. */
+  volatile uint8_t* ubrrl;  /**< USART Baud Rate Register Low. */
+  volatile uint8_t* ubrrh;  /**< USART Baud Rate Register High. */
+  volatile uint8_t* udr;    /**< USART I/O Data Register. */
+};
+//------------------------------------------------------------------------------
+/**
+ * Pointers to USART registers.  This static const array allows the compiler
+ * to generate very efficient code if the array index is a constant.
+ */
+static const UsartRegister usart[] = {
+#ifdef UCSR0A
+  {&UCSR0A, &UCSR0B, &UCSR0C, &UBRR0L, &UBRR0H, &UDR0},
+#elif defined(UCSRA)
+  {&UCSRA, &UCSRB, &UCSRC, &UBRRL, &UBRRH, &UDR},
+#else  // UCSR0A
+  {0, 0, 0, 0, 0, 0},
+#endif  // UCSR0A
+
+#ifdef UCSR1A
+  {&UCSR1A, &UCSR1B, &UCSR1C, &UBRR1L, &UBRR1H, &UDR1},
+#else  // UCSR1A
+  {0, 0, 0, 0, 0, 0},
+#endif  // UCSR1A
+
+#ifdef UCSR2A
+  {&UCSR2A, &UCSR2B, &UCSR2C, &UBRR2L, &UBRR2H, &UDR2},
+#else  // UCSR2A
+  {0, 0, 0, 0, 0, 0},
+#endif  // UCSR2A
+
+#ifdef UCSR3A
+  {&UCSR3A, &UCSR3B, &UCSR3C, &UBRR3L, &UBRR3H, &UDR3}
+#else  // UCSR3A
+  {0, 0, 0, 0, 0, 0}
+#endif  // UCSR3A
+};
+//------------------------------------------------------------------------------
 /** Memory map max size */
 static const uint8_t MMAP_MAX_SIZE = 16;
 /** First bit LSB */
@@ -71,7 +196,21 @@ class MMap
       mmap_ = mmap;
     }
 
+    /**
+     * @brief Add entry to the memory map
+     * 
+     * @param address Parameter address
+     * @param value Pointer to value
+     * @param param Parameter type
+     */
     inline __attribute__((always_inline))
+    void setEntry(uint8_t address, uint8_t* value, uint8_t param)
+    {
+      mmap_[address].value = value;
+      mmap_[address].param = param;
+    }
+
+    
     uint8_t setEEPROM(uint8_t address, uint8_t value)
     {
       DEBUG_PRINTLN("set eeprom");
@@ -82,7 +221,7 @@ class MMap
       return (*mmap_[address].value)=value;
     }
 
-    inline __attribute__((always_inline))
+    
     uint8_t getEEPROM(uint8_t address)
     {
       DEBUG_PRINTLN("get eeprom");

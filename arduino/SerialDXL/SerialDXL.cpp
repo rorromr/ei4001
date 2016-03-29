@@ -132,9 +132,18 @@ SerialRingBuffer::buf_size_t
 SerialRingBuffer rxRingBuf;
 SerialRingBuffer txRingBuf;
 //------------------------------------------------------------------------------
+// Serial ISR
 VirtualDeviceDXL *SerialDXL_ISR;
-
+// Serial
+#if defined(USART_RX_vect)
 ISR(USART_RX_vect) {
-  uint8_t data = UDR0;
+  uint8_t data = *usart[0].udr;
   SerialDXL_ISR->process(data);
 }
+// Serial1
+#elif defined(USART1_RX_vect)
+ISR(USART0_RX_vect) {
+  uint8_t data = *usart[1].udr;
+  SerialDXL_ISR->process(data);
+}
+#endif
