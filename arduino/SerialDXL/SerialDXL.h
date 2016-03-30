@@ -8,8 +8,8 @@
 /**
  * Debug macros
  */
-#ifdef DEBUG
-#define DEBUG_PRINT(...)
+#ifdef DEBUG_SERIAL_DXL
+#define DEBUG_PRINT(...) 
 #define DEBUG_PRINTLN(...)
 #else
 #define DEBUG_PRINT(...)
@@ -104,6 +104,44 @@ static const uint8_t M_UCSZ1 = 1 << UCSZ11;
 #error no serial ports
 #endif  // UCSR0A
 //------------------------------------------------------------------------------
+// Serial options
+/** Use one stop bit. */
+static const uint8_t SP_1_STOP_BIT = 0;
+/** Use two stop bits. */
+static const uint8_t SP_2_STOP_BIT = M_USBS;
+
+/** No parity bit. */
+static const uint8_t SP_NO_PARITY = 0;
+/** Use even parity. */
+static const uint8_t SP_EVEN_PARITY = M_UPM1;
+/** Use odd parity. */
+static const uint8_t SP_ODD_PARITY = M_UPM0 | M_UPM1;
+
+/** Use 5-bit character size. */
+static const uint8_t SP_5_BIT_CHAR = 0;
+/** Use 6-bit character size. */
+static const uint8_t SP_6_BIT_CHAR = M_UCSZ0;
+/** Use 7-bit character size. */
+static const uint8_t SP_7_BIT_CHAR = M_UCSZ1;
+/** Use 8-bit character size. */
+static const uint8_t SP_8_BIT_CHAR = M_UCSZ0 | M_UCSZ1;
+/** Mask for all options bits. */
+static const uint8_t SP_OPT_MASK = M_USBS | M_UPM0 | M_UPM1 |M_UCSZ0 | M_UCSZ1;
+
+/** USART framing error bit. */
+static const uint8_t SP_FRAMING_ERROR    = M_FE;
+/** USART RX data overrun error bit. */
+static const uint8_t SP_RX_DATA_OVERRUN  = M_DOR;
+/** USART parity error bit. */
+static const uint8_t SP_PARITY_ERROR     = M_UPE;
+/** Mask for all error bits in UCSRA. */
+static const uint8_t SP_UCSRA_ERROR_MASK = M_FE | M_DOR | M_UPE;
+/** RX ring buffer full overrun. */
+static const uint8_t SP_RX_BUF_OVERRUN  = 1;
+#if 1 & ((1 << FE0) | (1 << DOR0) |(1 << UPE0))
+#error Invalid SP_RX_BUF_OVERRUN bit
+#endif  // SP_RX_BUF_OVERRUN
+//------------------------------------------------------------------------------
 /**
  * @class UsartRegister
  * @brief Addresses of USART registers.
@@ -150,13 +188,13 @@ static const UsartRegister usart[] = {
 };
 //------------------------------------------------------------------------------
 /** Memory map max size */
-static const uint8_t MMAP_MAX_SIZE = 16;
+static const uint8_t MMAP_MAX_SIZE = 64U;
 /** First bit LSB */
-static const uint8_t MMAP_RW = 1;
-static const uint8_t MMAP_R = 0;
+static const uint8_t MMAP_RW = 1U;
+static const uint8_t MMAP_R = 0U;
 /** Second bit */
-static const uint8_t MMAP_RAM = 1 << 1;
-static const uint8_t MMAP_EEPROM = 0;
+static const uint8_t MMAP_RAM = 1U << 1U;
+static const uint8_t MMAP_EEPROM = 0U;
 //------------------------------------------------------------------------------
 /** Cause error message for bad Size.
  * @return Never returns since it is never called.
@@ -341,7 +379,7 @@ uint8_t badMsgBufLength(void)
   __attribute__((error("Message buffer length too large or zero")));
 
 
-template<size_t maxMsgLength>
+template<uint8_t PortNumber, size_t maxMsgLength>
 class SerialDXL: public VirtualDeviceDXL
 {
   public:
@@ -374,8 +412,8 @@ class SerialDXL: public VirtualDeviceDXL
       uint16_t baud_setting = UBRR_VALUE(2000000/(baud+1));
 
       // Set baud rate
-      UBRR0H = (uint8_t)(baud_setting>>8);  // High bit
-      UBRR0L = (uint8_t)baud_setting;       // Low bit
+      *usart[PortNumber].ubrrh = (uint8_t)(baud_setting>>8);  // High bit
+      *usart[PortNumber].ubrrl = (uint8_t)baud_setting;       // Low bit
 
       /* USART interrupts     
       RXCIE0 | RX Complete interrupt enable
@@ -386,7 +424,7 @@ class SerialDXL: public VirtualDeviceDXL
       */
 
       // Set frame format to Dynamixel 8N1 (8 data bits, no parity, 1 stop bit)
-      UCSR0C |= (1<<UCSZ01)|(1<<UCSZ00);
+      *usart[PortNumber].ucsrc |= (1<<UCSZ01)|(1<<UCSZ00);
 
       // Enable USART interrupts
       //UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));

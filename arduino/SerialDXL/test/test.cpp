@@ -102,7 +102,7 @@ class LedDXL: public DeviceDXL
 
 
 LedDXL led(LED_ID, 3, 10);
-SerialDXL<32> serial;
+SerialDXL<32, 1> serial;
 
 void setup() {
   // Init serial communication using Dynamixel format
