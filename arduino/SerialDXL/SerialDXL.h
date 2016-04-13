@@ -9,183 +9,20 @@
  * Debug macros
  */
 #ifdef DEBUG_SERIAL_DXL
-#define DEBUG_PRINT(...) 
-#define DEBUG_PRINTLN(...)
+#define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
+#define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
 #else
 #define DEBUG_PRINT(...)
 #define DEBUG_PRINTLN(...)
 #endif
 //------------------------------------------------------------------------------
 #include <avr/eeprom.h>
-#include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/sleep.h>
 #include <util/atomic.h>
 #include <string.h>
-//------------------------------------------------------------------------------
-// Serial registers
-#if defined(UCSR3A)
-static const uint8_t SERIAL_PORT_COUNT = 4;
-#elif defined(UCSR2A)
-static const uint8_t SERIAL_PORT_COUNT = 3;
-#elif defined(UCSR1A)
-static const uint8_t SERIAL_PORT_COUNT = 2;
-#elif defined(UCSR0A) || defined(UCSRA)
-static const uint8_t SERIAL_PORT_COUNT = 1;
-#else
-#error no serial ports.
-#endif
-//------------------------------------------------------------------------------
-#ifdef UCSR0A
-// Bits in UCSRA.
-static const uint8_t M_RXC  = 1 << RXC0;
-static const uint8_t M_TXC  = 1 << TXC0;
-static const uint8_t M_UDRE = 1 << UDRE0;
-static const uint8_t M_FE   = 1 << FE0;
-static const uint8_t M_DOR  = 1 << DOR0;
-static const uint8_t M_UPE  = 1 << UPE0;
-static const uint8_t M_U2X  = 1 << U2X0;
-// Bits in UCSRB.
-static const uint8_t M_RXCIE = 1 << RXCIE0;
-static const uint8_t M_TXCIE = 1 << TXCIE0;
-static const uint8_t M_UDRIE = 1 << UDRIE0;
-static const uint8_t M_RXEN  = 1 << RXEN0;
-static const uint8_t M_TXEN  = 1 << TXEN0;
-// Bits in UCSRC.
-static const uint8_t M_UPM0 = 1 << UPM00;
-static const uint8_t M_UPM1 = 1 << UPM01;
-static const uint8_t M_USBS = 1 << USBS0;
-static const uint8_t M_UCSZ0 = 1 << UCSZ00;
-static const uint8_t M_UCSZ1 = 1 << UCSZ01;
-#elif defined(UCSRA)  // UCSR0A
-// Bits in UCSRA.
-static const uint8_t M_RXC  = 1 << RXC;
-static const uint8_t M_TXC  = 1 << TXC;
-static const uint8_t M_UDRE = 1 << UDRE;
-static const uint8_t M_FE   = 1 << FE;
-static const uint8_t M_DOR  = 1 << DOR;
-static const uint8_t M_UPE  = 1 << PE;
-static const uint8_t M_U2X  = 1 << U2X;
-// Bits in UCSRB.
-static const uint8_t M_RXCIE = 1 << RXCIE;
-static const uint8_t M_TXCIE = 1 << TXCIE;
-static const uint8_t M_UDRIE = 1 << UDRIE;
-static const uint8_t M_RXEN  = 1 << RXEN;
-static const uint8_t M_TXEN  = 1 << TXEN;
-// Bits in UCSRC.
-static const uint8_t M_UPM0 = 1 << UPM0;
-static const uint8_t M_UPM1 = 1 << UPM1;
-static const uint8_t M_USBS = 1 << USBS;
-static const uint8_t M_UCSZ0 = 1 << UCSZ0;
-static const uint8_t M_UCSZ1 = 1 << UCSZ1;
-#elif defined(UCSR1A)  // UCSR0A
-// Bits in UCSRA.
-static const uint8_t M_RXC  = 1 << RXC1;
-static const uint8_t M_TXC  = 1 << TXC1;
-static const uint8_t M_UDRE = 1 << UDRE1;
-static const uint8_t M_FE   = 1 << FE1;
-static const uint8_t M_DOR  = 1 << DOR1;
-static const uint8_t M_UPE  = 1 << UPE1;
-static const uint8_t M_U2X  = 1 << U2X1;
-// Bits in UCSRB.
-static const uint8_t M_RXCIE = 1 << RXCIE1;
-static const uint8_t M_TXCIE = 1 << TXCIE1;
-static const uint8_t M_UDRIE = 1 << UDRIE1;
-static const uint8_t M_RXEN  = 1 << RXEN1;
-static const uint8_t M_TXEN  = 1 << TXEN1;
-// Bits in UCSRC.
-static const uint8_t M_UPM0 = 1 << UPM10;
-static const uint8_t M_UPM1 = 1 << UPM11;
-static const uint8_t M_USBS = 1 << USBS1;
-static const uint8_t M_UCSZ0 = 1 << UCSZ10;
-static const uint8_t M_UCSZ1 = 1 << UCSZ11;
-#else  // UCSR0A
-#error no serial ports
-#endif  // UCSR0A
-//------------------------------------------------------------------------------
-// Serial options
-/** Use one stop bit. */
-static const uint8_t SP_1_STOP_BIT = 0;
-/** Use two stop bits. */
-static const uint8_t SP_2_STOP_BIT = M_USBS;
-
-/** No parity bit. */
-static const uint8_t SP_NO_PARITY = 0;
-/** Use even parity. */
-static const uint8_t SP_EVEN_PARITY = M_UPM1;
-/** Use odd parity. */
-static const uint8_t SP_ODD_PARITY = M_UPM0 | M_UPM1;
-
-/** Use 5-bit character size. */
-static const uint8_t SP_5_BIT_CHAR = 0;
-/** Use 6-bit character size. */
-static const uint8_t SP_6_BIT_CHAR = M_UCSZ0;
-/** Use 7-bit character size. */
-static const uint8_t SP_7_BIT_CHAR = M_UCSZ1;
-/** Use 8-bit character size. */
-static const uint8_t SP_8_BIT_CHAR = M_UCSZ0 | M_UCSZ1;
-/** Mask for all options bits. */
-static const uint8_t SP_OPT_MASK = M_USBS | M_UPM0 | M_UPM1 |M_UCSZ0 | M_UCSZ1;
-
-/** USART framing error bit. */
-static const uint8_t SP_FRAMING_ERROR    = M_FE;
-/** USART RX data overrun error bit. */
-static const uint8_t SP_RX_DATA_OVERRUN  = M_DOR;
-/** USART parity error bit. */
-static const uint8_t SP_PARITY_ERROR     = M_UPE;
-/** Mask for all error bits in UCSRA. */
-static const uint8_t SP_UCSRA_ERROR_MASK = M_FE | M_DOR | M_UPE;
-/** RX ring buffer full overrun. */
-static const uint8_t SP_RX_BUF_OVERRUN  = 1;
-#if 1 & ((1 << FE0) | (1 << DOR0) |(1 << UPE0))
-#error Invalid SP_RX_BUF_OVERRUN bit
-#endif  // SP_RX_BUF_OVERRUN
-//------------------------------------------------------------------------------
-/**
- * @class UsartRegister
- * @brief Addresses of USART registers.
- */
-struct UsartRegister {
-  volatile uint8_t* ucsra;  /**< USART Control and Status Register A. */
-  volatile uint8_t* ucsrb;  /**< USART Control and Status Register B. */
-  volatile uint8_t* ucsrc;  /**< USART Control and Status Register C. */
-  volatile uint8_t* ubrrl;  /**< USART Baud Rate Register Low. */
-  volatile uint8_t* ubrrh;  /**< USART Baud Rate Register High. */
-  volatile uint8_t* udr;    /**< USART I/O Data Register. */
-};
-//------------------------------------------------------------------------------
-/**
- * Pointers to USART registers.  This static const array allows the compiler
- * to generate very efficient code if the array index is a constant.
- */
-static const UsartRegister usart[] = {
-#ifdef UCSR0A
-  {&UCSR0A, &UCSR0B, &UCSR0C, &UBRR0L, &UBRR0H, &UDR0},
-#elif defined(UCSRA)
-  {&UCSRA, &UCSRB, &UCSRC, &UBRRL, &UBRRH, &UDR},
-#else  // UCSR0A
-  {0, 0, 0, 0, 0, 0},
-#endif  // UCSR0A
-
-#ifdef UCSR1A
-  {&UCSR1A, &UCSR1B, &UCSR1C, &UBRR1L, &UBRR1H, &UDR1},
-#else  // UCSR1A
-  {0, 0, 0, 0, 0, 0},
-#endif  // UCSR1A
-
-#ifdef UCSR2A
-  {&UCSR2A, &UCSR2B, &UCSR2C, &UBRR2L, &UBRR2H, &UDR2},
-#else  // UCSR2A
-  {0, 0, 0, 0, 0, 0},
-#endif  // UCSR2A
-
-#ifdef UCSR3A
-  {&UCSR3A, &UCSR3B, &UCSR3C, &UBRR3L, &UBRR3H, &UDR3}
-#else  // UCSR3A
-  {0, 0, 0, 0, 0, 0}
-#endif  // UCSR3A
-};
+#include <Arduino.h>
 //------------------------------------------------------------------------------
 /** Memory map max size */
 static const uint8_t MMAP_MAX_SIZE = 64U;
@@ -332,7 +169,7 @@ class MMap
 //------------------------------------------------------------------------------
 /**
  * @class DeviceDXL
- * @brief Virtual class for Device with DXL.
+ * @brief Virtual class for device with Dynamixel protocol.
  */
 class DeviceDXL {
   public:
@@ -357,21 +194,11 @@ class DeviceDXL {
 };
 //------------------------------------------------------------------------------
 /**
- * @class VirtualDeviceDXL
- * @brief Virtual class for ISR.
- */
-class VirtualDeviceDXL {
-  public:
-    virtual void process(uint8_t data) {}
-};
-extern VirtualDeviceDXL *SerialDXL_ISR;
-//------------------------------------------------------------------------------
-/**
  * @class SerialDXL
  * @brief Serial port wrapper for DXL communication protocol.
  */
-#define UBRR_VALUE(BAUDRATE) (((F_CPU / (BAUDRATE * 16UL))) - 1)
-#define MAX_MSG_LENGTH 100
+
+#define SERIALDXL_MSG_LENGTH 64
 /** Cause error message for RX buffer bad Size.
  * @return Never returns since it is never called.
  */
@@ -379,22 +206,17 @@ uint8_t badMsgBufLength(void)
   __attribute__((error("Message buffer length too large or zero")));
 
 
-template<uint8_t PortNumber, size_t maxMsgLength>
-class SerialDXL: public VirtualDeviceDXL
+class SerialDXL
 {
   public:
     SerialDXL():
-      msgState_(0),
-      msgParamIdx_(2),
-      msgLen_(0),
-      msgFinish_(0),
-      msgChecksum_(0),
-      error_()
+      msgState_(0U),
+      msgParamIdx_(2U),
+      msgLen_(0U),
+      msgFinish_(0U),
+      msgChecksum_(0U),
+      error_(0U)
     {
-      // Check buffer sizes
-      if (maxMsgLength > MAX_MSG_LENGTH || !maxMsgLength) badMsgBufLength();
-      // Initialize global ptr for ISR
-      SerialDXL_ISR = this;
     }
 
     /**
@@ -402,38 +224,22 @@ class SerialDXL: public VirtualDeviceDXL
      * @details 
      * 
      * @param baud Baudrate using Dynamixel format.
+     * @param port Serial port (Stream class).
      * @param device Target device.
      */
-    void init(uint8_t baud, DeviceDXL *device)
+    void init(uint32_t baud, HardwareSerial *port, DeviceDXL *device)
     {
       // Set DeviceDXL
       device_ = device;
+      // Set serial port
+      port_ = port;
       // Set baudrate using Dynamixel relation
-      uint16_t baud_setting = UBRR_VALUE(2000000/(baud+1));
-
-      // Set baud rate
-      *usart[PortNumber].ubrrh = (uint8_t)(baud_setting>>8);  // High bit
-      *usart[PortNumber].ubrrl = (uint8_t)baud_setting;       // Low bit
-
-      /* USART interrupts     
-      RXCIE0 | RX Complete interrupt enable
-      TXCIE0 | TX Complete interrupt enable
-      UDRIE0 | USART Data register empty interrupt enable (UDR0 Ready)
-      RXEN0  | RX Receiver enables
-      TXEN0  | TX Transmitter enable
-      */
-
-      // Set frame format to Dynamixel 8N1 (8 data bits, no parity, 1 stop bit)
-      *usart[PortNumber].ucsrc |= (1<<UCSZ01)|(1<<UCSZ00);
-
-      // Enable USART interrupts
-      //UCSR0B |= ((1<<TXEN0)|(1<<UDRIE0)|(1<<RXEN0)|(1<<RXCIE0));
-      UCSR0B |= (1<<RXEN0)|(1<<RXCIE0);
+      port_->begin(baud);
     }
 
     /**
      * @brief Process data from Serial 
-     * @details Add data to buffers, this function is called using ISR.
+     * @details Add data to buffers
      * 
      * @param data Data from Serial port.
      */
@@ -507,6 +313,8 @@ class SerialDXL: public VirtualDeviceDXL
   private:
     // DeviceDXL
     DeviceDXL *device_;
+    // Serial port
+    HardwareSerial *port_;
     // Mesage reception state
     uint8_t msgState_;
     uint8_t msgParamIdx_;
@@ -517,42 +325,9 @@ class SerialDXL: public VirtualDeviceDXL
     // Error state
     uint8_t error_;
 
-    // RX buffer
-    uint8_t rxMsgBuf_[maxMsgLength];
-    // TX buffer
-    uint8_t txMsgBuf_[maxMsgLength];
+    // Receive message buffer
+    uint8_t rxMsgBuf_[SERIALDXL_MSG_LENGTH];
 };
-//------------------------------------------------------------------------------
-/**
- * @class SerialRingBuffer
- * @brief Ring buffer for RX and TX data. Based on Bill Greiman Serial library
- * (https://github.com/greiman/SerialPort).
- */
-class SerialRingBuffer {
- public:
-  /** Define type for buffer indices */
-  typedef uint8_t buf_size_t;
-  int available();
-  /** @return @c true if the ring buffer is empty else @c false. */
-  bool empty() {return head_ == tail_;}
-  void flush();
-  bool get(uint8_t* b);
-  buf_size_t get(uint8_t* b, buf_size_t n);
-  void init(uint8_t* b, buf_size_t s);
-  int peek();
-  bool put(uint8_t b);
-  buf_size_t put(const uint8_t* b, buf_size_t n);
- private:
-  uint8_t* buf_;              /**< Pointer to start of buffer. */
-  volatile buf_size_t head_;  /**< Index to next empty location. */
-  volatile buf_size_t tail_;  /**< Index to last entry if head_ != tail_. */
-  buf_size_t size_;           /**< Size of the buffer. Capacity is size -1. */
-};
-//------------------------------------------------------------------------------
-/** RX ring buffers. */
-extern SerialRingBuffer rxRingBuf;
-/** TX ring buffers. */
-extern SerialRingBuffer txRingBuf;
 
 
 #endif
