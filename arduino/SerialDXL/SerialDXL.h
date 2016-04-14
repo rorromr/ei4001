@@ -16,163 +16,21 @@
 #define DEBUG_PRINTLN(...)
 #endif
 //------------------------------------------------------------------------------
-#include <avr/eeprom.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/sleep.h>
 #include <util/atomic.h>
 #include <string.h>
+#include "mmap.h"
 #include <Arduino.h>
-
-
-//------------------------------------------------------------------------------
-/** Memory map max size */
-static const uint8_t MMAP_MAX_SIZE = 64U;
-/** First bit LSB */
-static const uint8_t MMAP_RW = 1U;
-static const uint8_t MMAP_R = 0U;
-/** Second bit */
-static const uint8_t MMAP_RAM = 1U << 1U;
-static const uint8_t MMAP_EEPROM = 0U;
-//------------------------------------------------------------------------------
-/** Cause error message for bad Size.
- * @return Never returns since it is never called.
- */
-uint8_t badMMapLength(void)
-  __attribute__((error("MMAP length too large")));
-//------------------------------------------------------------------------------
-/**
- * @class mmap_entry_t
- * @brief Entry type for memory map.
- */
-typedef struct
-{
-  uint8_t *value;
-  uint8_t param;
-} mmap_entry_t;
-//------------------------------------------------------------------------------
-// Set MMAP entry macro
-#define MMAP_ENTRY(mmap, var, parameter) {(mmap).value = &(var); (mmap).param = (parameter);}
-//------------------------------------------------------------------------------
-/**
- * @class MMap
- * @brief Memory mapping.
- */
-class MMap
-{
-  public:
-    MMap(size_t N):
-    N_(N)
-    {
-      // Check size
-      if (N_ > MMAP_MAX_SIZE) badMMapLength();
-    }
-
-    void init(mmap_entry_t *mmap)
-    {
-      mmap_ = mmap;
-    }
-
-    /**
-     * @brief Add entry to the memory map
-     * 
-     * @param address Parameter address
-     * @param value Pointer to value
-     * @param param Parameter type
-     */
-    inline __attribute__((always_inline))
-    void setEntry(uint8_t address, uint8_t* value, uint8_t param)
-    {
-      mmap_[address].value = value;
-      mmap_[address].param = param;
-    }
-
-    
-    uint8_t setEEPROM(uint8_t address, uint8_t value)
-    {
-      DEBUG_PRINTLN("set eeprom");
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-      {
-        eeprom_write_byte ( (uint8_t*)(uint16_t) address, value);
-      }
-      return (*mmap_[address].value)=value;
-    }
-
-    
-    uint8_t getEEPROM(uint8_t address)
-    {
-      DEBUG_PRINTLN("get eeprom");
-      uint8_t read;
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-      {
-        read = eeprom_read_byte( (uint8_t*)(uint16_t) address );
-      }
-      return read;
-    }
-
-    void set(uint8_t address, uint8_t value)
-    {
-      // Check for size
-      DEBUG_PRINTLN("set");
-      if (address > N_)
-      {
-        DEBUG_PRINTLN("address error");
-        return;
-      }
-      // Check for access
-      if (!(mmap_[address].param & MMAP_RW))
-      {
-        DEBUG_PRINTLN(mmap_[address].param);
-        DEBUG_PRINTLN("read only address");
-        return;
-      }
-
-      
-      mmap_[address].param & MMAP_RAM ? 
-        (*mmap_[address].value)=value : setEEPROM(address, value);
-    }
-
-    void setFromEEPROM(uint8_t address)
-    {
-      // Check for size
-      DEBUG_PRINTLN("set from epprom");
-      if (address > N_)
-      {
-        DEBUG_PRINTLN("address error");
-        return;
-      }
-      uint8_t value = 0;
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-      {
-        value = eeprom_read_byte( (uint8_t*)(uint16_t) address );
-      }
-      (*mmap_[address].value)=value;
-    }
-
-    uint8_t get(uint8_t address)
-    {
-      // Check for size
-      DEBUG_PRINTLN("get");
-      if (address > N_)
-      {
-        DEBUG_PRINTLN("address error");
-        return 0;
-      }
-      return mmap_[address].param & MMAP_RAM ? 
-        (*mmap_[address].value) : getEEPROM(address);
-    }
-
-
-  private:
-    // Memory mapping with pointers to RAM and EEPROM data
-    mmap_entry_t *mmap_;
-    const size_t N_;
-};
 //------------------------------------------------------------------------------
 /**
  * @class DeviceDXL
  * @brief Virtual class for device with Dynamixel protocol.
  */
+
+
+
 class DeviceDXL {
   public:
     DeviceDXL(uint8_t id, uint8_t N):
@@ -199,7 +57,7 @@ class DeviceDXL {
     uint8_t returnDelay_;
 
     // Memory mapping
-    MMap mmap_;
+    MMap::MMap mmap_;
 };
 //------------------------------------------------------------------------------
 /**
@@ -254,7 +112,6 @@ class SerialDXL
      */
     void process(uint8_t data)
     {
-      cli();
       switch(msgState_)
       {
         case 0: // 0xFF
@@ -322,20 +179,13 @@ class SerialDXL
             txMsgBuf_[4] = 0; // Error
             txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
             // Status return delay
-            //_delay_us(160);
+            _delay_us(160);
             
             device_->setTX();
             // Send
-            for (i = 0; i <= 5; ++i)
-            {
-              while (!(UCSR0A & _BV(UDRE0)));
-              UDR0 = txMsgBuf_[i];
-            }
+            port_->write(txMsgBuf_,6);
+            port_->flush(); // Wait to complete
 
-            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
-            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
-            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
-            
             device_->setRX();
             msgFinish_ = 0;
             break;
@@ -355,15 +205,9 @@ class SerialDXL
 
             device_->setTX();
             // Send
-            for (i = 0; i <= 6; ++i)
-            {
-              while (!(UCSR0A & _BV(UDRE0)));
-              UDR0 = txMsgBuf_[i];
-            }
-            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
-            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
-            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
-            
+            port_->write(txMsgBuf_, 7);
+            port_->flush(); // Wait to complete
+
             device_->setRX();
             msgFinish_ = 0;
             break;
@@ -385,14 +229,8 @@ class SerialDXL
             
             device_->setTX();
             // Send
-            for (i = 0; i <= 5; ++i)
-            {
-              while (!(UCSR0A & _BV(UDRE0)));
-              UDR0 = txMsgBuf_[i];
-            }
-            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
-            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
-            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
+            port_->write(txMsgBuf_, 6);
+            port_->flush(); // Wait to complete
             
             device_->setRX();
             msgFinish_ = 0;
@@ -400,16 +238,7 @@ class SerialDXL
 
         }
       }
-      sei();
     }
-
-    void sendByte(uint8_t data)
-    {
-      // Wait for data buffer is empty
-      while (!(UCSR0A & _BV(UDRE0)));
-      UDR0 = data;
-    }
-
 
     uint8_t* getMsg()
     {
