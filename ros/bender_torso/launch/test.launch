@@ -1,0 +1,14 @@
+<launch>
+
+  <!-- Torso driver -->
+  <include file="$(find bender_torso)/launch/torso.launch"/>
+
+  <!-- Goal generator -->
+  <include file="$(find bender_torso)/launch/goal_generator.launch">
+    <arg name="rqt_gui" value="true" />
+  </include>
+
+  <!-- Rviz and URDF -->
+  <include file="$(find bender_description)/launch/display.launch"/>
+
+</launch>

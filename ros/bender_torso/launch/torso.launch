@@ -1,0 +1,16 @@
+<launch>
+  <!-- Arduino serial port -->
+  <arg name="serial_port" default="/dev/ttyUSB0" />
+  
+  <!-- ROS Serial node -->
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
+    <param name="port" value="$(arg serial_port)" />
+    <param name="baud" value="57600" />
+  </node>
+
+  <!-- Torso driver -->
+  <node pkg="bender_torso" type="torso_test.py" name="torso_driver" output="screen">
+    <param name="rate" value="10" />
+  </node>
+
+</launch>

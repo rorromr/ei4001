@@ -6,10 +6,15 @@
 #define VERSION_LED_DXL 1
 
 // LED MMAP
-#define ID      0
-#define VERSION 1
-#define COMMAND 2
-#define STATE   3
+#define MODEL_L   0
+#define MODEL_H   1
+#define FIRMWARE  2
+#define ID        3
+#define BAUDRATE  4
+#define RET_DELAY 5
+#define STATE     6
+#define COMMAND   7
+
 #define LED_MMAP_SIZE 4
 
 #define LED_ID 1
@@ -35,30 +40,59 @@ class LedDXL: public DeviceDXL
     led_pin_(led_pin),
     eeprom_null_(0)
     {
-      // MMAP Config
-      MMAP_ENTRY(mmap_field_[ID], id_, MMAP_EEPROM | MMAP_RW);               // ID
-      MMAP_ENTRY(mmap_field_[VERSION], eeprom_null_, MMAP_EEPROM | MMAP_R);  // Version
-      MMAP_ENTRY(mmap_field_[COMMAND], command_, MMAP_RAM | MMAP_RW);        // Current command
-      MMAP_ENTRY(mmap_field_[STATE], state_, MMAP_RAM | MMAP_R);             // Current state
+      /*
+      * MMAP Config
+      * General settings
+      */
+      // Model version
+      MMAP_ENTRY(mmap_field_[MODEL_L], eeprom_null_, MMAP_EEPROM | MMAP_R);
+      MMAP_ENTRY(mmap_field_[MODEL_H], eeprom_null_, MMAP_EEPROM | MMAP_R);
+      // Firmware
+      MMAP_ENTRY(mmap_field_[FIRMWARE], eeprom_null_, MMAP_EEPROM | MMAP_R);
+      // ID
+      MMAP_ENTRY(mmap_field_[ID], id_, MMAP_EEPROM | MMAP_RW);
+      // Baudrate
+      MMAP_ENTRY(mmap_field_[BAUDRATE], baudrate_, MMAP_EEPROM | MMAP_RW);
+      // Return delay
+      MMAP_ENTRY(mmap_field_[RET_DELAY], returnDelay_, MMAP_EEPROM | MMAP_RW);    
+      
+      /*
+      * MMAP Config
+      * LED settings
+      */
+      // State
+      MMAP_ENTRY(mmap_field_[STATE], state_, MMAP_RAM | MMAP_R);
+      // Command
+      MMAP_ENTRY(mmap_field_[COMMAND], command_, MMAP_RAM | MMAP_RW);
+      
+      // Init MMAP
       mmap_.init(mmap_field_);
 
       // Config LED pin
-      pinMode(led_pin_, OUTPUT);
 
+      pinMode(dir_pin_, OUTPUT);
     }
 
     void initRAM()
     {
-      // Set ID from EEPROM
       mmap_.setFromEEPROM(ID);
+      mmap_.setFromEEPROM(MODEL_L);
+      mmap_.setFromEEPROM(MODEL_H);
+      mmap_.setFromEEPROM(FIRMWARE);
+      mmap_.setFromEEPROM(BAUDRATE);
     }
 
     void initEEPROM()
     {
       // Set default ID
       mmap_.setEEPROM(ID, 15);
-      // Set version
-      mmap_.setEEPROM(VERSION, VERSION_LED_DXL);
+      // Set model
+      mmap_.setEEPROM(MODEL_L, 1);
+      mmap_.setEEPROM(MODEL_H, 0);
+      // Set firmware
+      mmap_.setEEPROM(FIRMWARE, 1);
+      // Baudrate
+      mmap_.setEEPROM(BAUDRATE, 207);
     }
 
     void reset()
@@ -68,11 +102,27 @@ class LedDXL: public DeviceDXL
 
     void proccessMsg(uint8_t *msg)
     {
-      // Instruction
-      if (msg[1] == 0x01)
+      // Ping
+      if (msg[1] == 0x02)
       {
         // Parameter
         digitalWrite(led_pin_, msg[2]);
+        state_ = msg[2];
+      }
+
+    }
+
+    void update()
+    {
+      if (command_ == 1)
+      {
+        digitalWrite(led_pin_, HIGH);
+        state_ = analogRead(A0)/4;
+      }
+      else if (command_ == 0)
+      {
+        digitalWrite(led_pin_, LOW);
+        state_ = analogRead(A0)/4;
       }
     }
 
@@ -99,6 +149,7 @@ class LedDXL: public DeviceDXL
 
     // Memory map
     mmap_entry_t mmap_field_[LED_MMAP_SIZE];
+
 };
 
 
@@ -121,7 +172,7 @@ void setup() {
 void loop() {
   // Update msg buffer
   if (Serial1.available())
-    serialDxl.process(Serial.read());
+    serialDxl.process(Serial1.read());
     
   uint8_t *msg = serialDxl.getMsg();
   if (msg)

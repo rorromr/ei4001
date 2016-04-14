@@ -1,0 +1,5 @@
+Encoder	KEYWORD1
+encoderA	KEYWORD2
+encoderB	KEYWORD2
+read	KEYWORD2
+

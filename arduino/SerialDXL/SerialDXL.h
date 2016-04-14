@@ -23,6 +23,8 @@
 #include <util/atomic.h>
 #include <string.h>
 #include <Arduino.h>
+
+
 //------------------------------------------------------------------------------
 /** Memory map max size */
 static const uint8_t MMAP_MAX_SIZE = 64U;
@@ -189,6 +191,13 @@ class DeviceDXL {
 
     // ID
     uint8_t id_;
+
+    // Baudrate
+    uint8_t baudrate_;
+
+    // Return dalay time
+    uint8_t returnDelay_;
+
     // Memory mapping
     MMap mmap_;
 };
@@ -245,6 +254,7 @@ class SerialDXL
      */
     void process(uint8_t data)
     {
+      cli();
       switch(msgState_)
       {
         case 0: // 0xFF
@@ -297,7 +307,109 @@ class SerialDXL
           msgChecksum_ = 0;
           break;
       }
+
+      // Process message
+      if (msgFinish_)
+      {
+        uint8_t i;
+        switch(rxMsgBuf_[1])
+        {
+          case 1: // Ping
+            txMsgBuf_[0] = 0xff;
+            txMsgBuf_[1] = 0xff;
+            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[3] = 2; // Length
+            txMsgBuf_[4] = 0; // Error
+            txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
+            // Status return delay
+            //_delay_us(160);
+            
+            device_->setTX();
+            // Send
+            for (i = 0; i <= 5; ++i)
+            {
+              while (!(UCSR0A & _BV(UDRE0)));
+              UDR0 = txMsgBuf_[i];
+            }
+
+            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
+            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
+            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
+            
+            device_->setRX();
+            msgFinish_ = 0;
+            break;
+
+          case 2: // Read data
+            txMsgBuf_[0] = 0xff;
+            txMsgBuf_[1] = 0xff;
+            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[3] = 3; // Length
+            txMsgBuf_[4] = 0; // Error
+            // @TODO
+            txMsgBuf_[5] = device_->mmap_.get(rxMsgBuf_[2]);
+            
+            txMsgBuf_[6] = ~(txMsgBuf_[2]+txMsgBuf_[3]+txMsgBuf_[4]+txMsgBuf_[5]);
+            // Status return delay
+            _delay_us(160);
+
+            device_->setTX();
+            // Send
+            for (i = 0; i <= 6; ++i)
+            {
+              while (!(UCSR0A & _BV(UDRE0)));
+              UDR0 = txMsgBuf_[i];
+            }
+            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
+            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
+            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
+            
+            device_->setRX();
+            msgFinish_ = 0;
+            break;
+
+          case 3: // Write data
+            txMsgBuf_[0] = 0xff;
+            txMsgBuf_[1] = 0xff;
+            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[3] = 2; // Length
+
+            // @TODO
+            // Only one byte
+            device_->mmap_.set(rxMsgBuf_[2],rxMsgBuf_[3]);
+
+            txMsgBuf_[4] = 0; // Error
+            txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
+            // Status return delay
+            _delay_us(160);
+            
+            device_->setTX();
+            // Send
+            for (i = 0; i <= 5; ++i)
+            {
+              while (!(UCSR0A & _BV(UDRE0)));
+              UDR0 = txMsgBuf_[i];
+            }
+            while (!(UCSR0A & _BV(UDRE0))); // Wait for empty transmit buffer
+            UCSR0A |= _BV(TXC0);            // Mark transmission not complete
+            while (!(UCSR0A & _BV(TXC0)));  // Wait for the transmission to complete
+            
+            device_->setRX();
+            msgFinish_ = 0;
+            break;
+
+        }
+      }
+      sei();
     }
+
+    void sendByte(uint8_t data)
+    {
+      // Wait for data buffer is empty
+      while (!(UCSR0A & _BV(UDRE0)));
+      UDR0 = data;
+    }
+
 
     uint8_t* getMsg()
     {
@@ -327,6 +439,8 @@ class SerialDXL
 
     // Receive message buffer
     uint8_t rxMsgBuf_[SERIALDXL_MSG_LENGTH];
+    // Send message buffer
+    uint8_t txMsgBuf_[SERIALDXL_MSG_LENGTH];
 };
 
 
