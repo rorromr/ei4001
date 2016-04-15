@@ -1,4 +1,7 @@
-
+/**
+ * @file
+ * @brief Memory mapping
+ */
 #ifndef MMap_h
 #define MMap_h
 //------------------------------------------------------------------------------
@@ -40,11 +43,15 @@ typedef struct
 namespace MMap
 {
 
-enum
+struct Access
 {
-  RW = 0U,
-  RO = 1U
+  enum
+  {
+    RW = 0U,
+    RO = 1U
+  };
 };
+
 //------------------------------------------------------------------------------
 /**
  * @class Variable
@@ -53,7 +60,7 @@ enum
 class Variable
 {
   public:
-    Variable(uint8_t param = RW): param_(param) {};
+    Variable(uint8_t param = Access::RW): param_(param) {};
     virtual uint8_t serialize(uint8_t *outbuffer) const =0;
     virtual uint8_t deserialize(uint8_t *inbuffer) =0;
   protected:
@@ -67,7 +74,8 @@ class Variable
 class VariableNV : public Variable
 {
   public:
-    VariableNV(uint8_t address, uint8_t param = RW): Variable(param), address_(address) {};
+    VariableNV(uint8_t address, uint8_t param = Access::RW):
+      Variable(param), address_(address) {};
     virtual uint8_t serialize(uint8_t *outbuffer) const =0;
     virtual uint8_t deserialize(uint8_t *inbuffer) =0;
     virtual void load() =0;
@@ -84,7 +92,7 @@ class UInt8: public Variable
 {
   public:
     uint8_t data;
-    UInt8(uint8_t param = RW, uint8_t min = 0U, uint8_t max = 255U, uint8_t def = 0U):
+    UInt8(uint8_t param = Access::RW, uint8_t min = 0U, uint8_t max = 255U, uint8_t def = 0U):
       Variable(param), min_(min), max_(max), def_(def), data(def) {}
     
     virtual uint8_t serialize(uint8_t *outbuffer) const
@@ -98,7 +106,7 @@ class UInt8: public Variable
     virtual uint8_t deserialize(uint8_t *inbuffer)
     {
       // Check for read only
-      if (param_ == RO)
+      if (param_ == Access::RO)
         return sizeof(this->data);
 
       uint8_t offset = 0;
@@ -119,7 +127,7 @@ class UInt8NV: public VariableNV
 {
   public:
     uint8_t data;
-    UInt8NV(uint8_t address, uint8_t param = RW, uint8_t min = 0U, 
+    UInt8NV(uint8_t address, uint8_t param = Access::RW, uint8_t min = 0U, 
       uint8_t max = 255U, uint8_t def = 0U):
       VariableNV(address, param), min_(min), max_(max), def_(def), data(def) {}
     
@@ -134,7 +142,7 @@ class UInt8NV: public VariableNV
     virtual uint8_t deserialize(uint8_t *inbuffer)
     {
       // Check for read only
-      if (param_ == RO)
+      if (param_ == Access::RO)
         return sizeof(this->data);
 
       uint8_t offset = 0;
