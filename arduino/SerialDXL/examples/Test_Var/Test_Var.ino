@@ -1,9 +1,10 @@
 #include <SerialDXL.h>
 
-MMap::UInt8 foo(MMap::Access::RW, 10, 200, 25);
-MMap::UInt8 bar(MMap::Access::RW, 10, 200, 50);
+MMap::UInt8NV foo_nv(0, 5, MMap::Access::RW, 10, 60, 13);
 
-MMap::UInt8NV foo_nv(5, MMap::Access::RW, 10, 60, 13);
+MMap::UInt8 foo(1, MMap::Access::RW, 10, 200, 25);
+MMap::UInt8 bar(2, MMap::Access::RW, 10, 200, 50);
+
 
 uint8_t mmap_buf[] = {0x00,0x00,0x00,0x00};
 

@@ -39,17 +39,27 @@ typedef struct
 #define MMAP_ENTRY(mmap, var, parameter) {(mmap).value = &(var); (mmap).param = (parameter);}
 // Saturation function
 #define MMAP_SAT(x, min, max) ( ((x) > max) ? max : ( ((x) < min) ? min : (x) ) )
+
 //------------------------------------------------------------------------------
 namespace MMap
 {
 
+
+/**
+ * @brief Access class for read and write permission check
+ */
+ // Implementation try to emulate scoped enumerations behavior
 struct Access
 {
-  enum
+  enum type
   {
     RW = 0U,
     RO = 1U
   };
+  Access(type t) : value_(t) {}
+  operator type() const { return value_; }
+  private:
+    type value_;
 };
 
 //------------------------------------------------------------------------------
@@ -60,11 +70,27 @@ struct Access
 class Variable
 {
   public:
-    Variable(uint8_t param = Access::RW): param_(param) {};
-    virtual uint8_t serialize(uint8_t *outbuffer) const =0;
-    virtual uint8_t deserialize(uint8_t *inbuffer) =0;
+    Variable(uint8_t address, Access access = Access::RW):
+      address_(address),
+      access_(access) {};
+
+    virtual uint8_t serialize(uint8_t *outbuffer) const = 0;
+    virtual uint8_t deserialize(uint8_t *inbuffer) = 0;
+    static uint8_t size()
+    {
+      return 0;
+    }
+  
   protected:
-    uint8_t param_;
+    /**
+     * Address in message buffer
+     */
+    const uint8_t address_;
+    /**
+     * Access type
+     */
+    const Access access_;
+    
 };
 
 /**
@@ -74,14 +100,18 @@ class Variable
 class VariableNV : public Variable
 {
   public:
-    VariableNV(uint8_t address, uint8_t param = Access::RW):
-      Variable(param), address_(address) {};
-    virtual uint8_t serialize(uint8_t *outbuffer) const =0;
-    virtual uint8_t deserialize(uint8_t *inbuffer) =0;
-    virtual void load() =0;
-    virtual void save(void *data) const =0;
+    VariableNV(uint8_t address, uint8_t nv_address, Access access = Access::RW):
+      Variable(address, access),
+      nv_address_(nv_address) {};
+    
+    virtual void load() = 0;
+    virtual void save() const = 0;
+  
   protected:
-    uint8_t address_;
+    /**
+     * Non volatile (EEPROM) memory address
+     */
+    const uint8_t nv_address_;
 };
 
 /**
@@ -91,10 +121,28 @@ class VariableNV : public Variable
 class UInt8: public Variable
 {
   public:
-    uint8_t data;
-    UInt8(uint8_t param = Access::RW, uint8_t min = 0U, uint8_t max = 255U, uint8_t def = 0U):
-      Variable(param), min_(min), max_(max), def_(def), data(def) {}
     
+    uint8_t data;
+
+    /**
+     * @brief UInt8 contructor
+     * 
+     * @param address Message buffer address
+     * @param access Variable access
+     * @param min Min value
+     * @param max Max value
+     * @param def Default value
+     */
+    UInt8(uint8_t address, Access access = Access::RW, uint8_t min = 0U, uint8_t max = 255U, uint8_t def = 0U):
+      Variable(address, access),
+      min_(min), max_(max), def_(def), data(def) {}
+    
+    /**
+     * @brief Serialize data into message buffer
+     * 
+     * @param outbuffer Message buffer
+     * @return Variable size (in bytes)
+     */
     virtual uint8_t serialize(uint8_t *outbuffer) const
     {
       uint8_t offset = 0;
@@ -103,10 +151,16 @@ class UInt8: public Variable
       return offset;
     }
 
+    /**
+     * @brief Deserialize data from message buffer
+     * 
+     * @param inbuffer Message buffer
+     * @return Variable size (in bytes)
+     */
     virtual uint8_t deserialize(uint8_t *inbuffer)
     {
       // Check for read only
-      if (param_ == Access::RO)
+      if (access_ == Access::RO)
         return sizeof(this->data);
 
       uint8_t offset = 0;
@@ -115,8 +169,25 @@ class UInt8: public Variable
       offset += sizeof(this->data);
       return offset;
     }
+
+    static uint8_t size()
+    {
+      return sizeof(data);
+    }
+
   private:
-    const uint8_t min_, max_, def_;
+    /**
+     * Min value of data
+     */
+    const uint8_t min_;
+    /**
+     * Max value of data
+     */
+    const uint8_t max_;
+    /**
+     * Default value of data
+     */
+    const uint8_t def_;
 };
 
 /**
@@ -127,9 +198,10 @@ class UInt8NV: public VariableNV
 {
   public:
     uint8_t data;
-    UInt8NV(uint8_t address, uint8_t param = Access::RW, uint8_t min = 0U, 
+    UInt8NV(uint8_t address, uint8_t nv_address, Access access = Access::RW, uint8_t min = 0U, 
       uint8_t max = 255U, uint8_t def = 0U):
-      VariableNV(address, param), min_(min), max_(max), def_(def), data(def) {}
+      VariableNV(address, nv_address, access),
+      min_(min), max_(max), def_(def), data(def) {}
     
     virtual uint8_t serialize(uint8_t *outbuffer) const
     {
@@ -142,7 +214,7 @@ class UInt8NV: public VariableNV
     virtual uint8_t deserialize(uint8_t *inbuffer)
     {
       // Check for read only
-      if (param_ == Access::RO)
+      if (access_ == Access::RO)
         return sizeof(this->data);
 
       uint8_t offset = 0;
@@ -151,7 +223,7 @@ class UInt8NV: public VariableNV
       // Only update EEPROM when value has changed
       if (this->data != updated_data)
       {
-        eeprom_write_byte ( (uint8_t*)(uint16_t) address_, updated_data);
+        eeprom_write_byte ( (uint8_t*)(uint16_t) nv_address_, updated_data);
         this->data = updated_data;
       }
       offset += sizeof(this->data);
@@ -161,15 +233,19 @@ class UInt8NV: public VariableNV
     virtual void load()
     {
       // Get data from EEPROM
-      this->data = eeprom_read_byte( (uint8_t*)(uint16_t) address_);
+      this->data = eeprom_read_byte( (uint8_t*)(uint16_t) nv_address_);
     }
 
-    virtual void save(void *data = NULL) const
+    virtual void save() const
     {
-      // Load default or get data from ptr
-      uint8_t updated_data = data == NULL ? def_ : *(uint8_t*)data;
-      eeprom_write_byte ( (uint8_t*)(uint16_t) address_, updated_data);
+      eeprom_write_byte ( (uint8_t*)(uint16_t) nv_address_, this->data);
     }
+
+    static uint8_t size()
+    {
+      return sizeof(data);
+    }
+    
   private:
     const uint8_t min_, max_, def_;
 };
