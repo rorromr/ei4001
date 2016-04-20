@@ -6,7 +6,6 @@
 #define MMap_h
 //------------------------------------------------------------------------------
 #include <avr/eeprom.h>
-#include <util/atomic.h>
 //------------------------------------------------------------------------------
 /** Memory map max size */
 static const uint8_t MMAP_MAX_SIZE = 64U;
@@ -54,7 +53,7 @@ struct Access
   enum type
   {
     RW = 0U,
-    RO = 1U
+    R = 1U
   };
   Access(type t) : value_(t) {}
   operator type() const { return value_; }
@@ -76,10 +75,10 @@ class Variable
 
     virtual uint8_t serialize(uint8_t *outbuffer) const = 0;
     virtual uint8_t deserialize(uint8_t *inbuffer) = 0;
-    static uint8_t size()
-    {
-      return 0;
-    }
+    virtual void load() = 0;
+    virtual void save() const = 0;
+    virtual void setDefault() {};
+    static uint8_t size() {return 0;}
   
   protected:
     /**
@@ -93,6 +92,8 @@ class Variable
     
 };
 
+typedef Variable* VariablePtr;
+
 /**
  * @class Variable
  * @brief Virtual base class for MMap non-volatile variables.
@@ -103,9 +104,6 @@ class VariableNV : public Variable
     VariableNV(uint8_t address, uint8_t nv_address, Access access = Access::RW):
       Variable(address, access),
       nv_address_(nv_address) {};
-    
-    virtual void load() = 0;
-    virtual void save() const = 0;
   
   protected:
     /**
@@ -160,7 +158,7 @@ class UInt8: public Variable
     virtual uint8_t deserialize(uint8_t *inbuffer)
     {
       // Check for read only
-      if (access_ == Access::RO)
+      if (access_ == Access::R)
         return sizeof(this->data);
 
       uint8_t offset = 0;
@@ -169,6 +167,11 @@ class UInt8: public Variable
       offset += sizeof(this->data);
       return offset;
     }
+
+
+    virtual void load() { this->data = this->def_; }
+    virtual void save() const {}
+    virtual void setDefault() { this->data = this->def_; }
 
     static uint8_t size()
     {
@@ -214,7 +217,7 @@ class UInt8NV: public VariableNV
     virtual uint8_t deserialize(uint8_t *inbuffer)
     {
       // Check for read only
-      if (access_ == Access::RO)
+      if (access_ == Access::R)
         return sizeof(this->data);
 
       uint8_t offset = 0;
@@ -241,11 +244,14 @@ class UInt8NV: public VariableNV
       eeprom_write_byte ( (uint8_t*)(uint16_t) nv_address_, this->data);
     }
 
+    virtual void setDefault(){ this->data = this->def_; }
+    
+
     static uint8_t size()
     {
       return sizeof(data);
     }
-    
+
   private:
     const uint8_t min_, max_, def_;
 };
@@ -259,112 +265,100 @@ class UInt8NV: public VariableNV
 class MMap
 {
   public:
-    MMap(size_t N):
-    N_(N)
+    MMap(uint8_t bufSize):
+    bufN_(bufSize),
+    varN_(0U)
     {
       // Check size
-      if (N_ > MMAP_MAX_SIZE) badMMapLength();
+      if (bufN_ > MMAP_MAX_SIZE) badMMapLength();
     }
 
-    void init(mmap_entry_t *mmap)
+    void init(uint8_t *msgBuffer, VariablePtr *varList)
     {
-      mmap_ = mmap;
+      msgBuffer_ = msgBuffer;
+      varList_ = varList;
     }
 
-    /**
-     * @brief Add entry to the memory map
-     * 
-     * @param address Parameter address
-     * @param value Pointer to value
-     * @param param Parameter type
-     */
+
     inline __attribute__((always_inline))
-    void setEntry(uint8_t address, uint8_t* value, uint8_t param)
+    void registerVariable(VariablePtr var)
     {
-      mmap_[address].value = value;
-      mmap_[address].param = param;
+      varList_[varN_++]=var;
     }
-
     
-    uint8_t setEEPROM(uint8_t address, uint8_t value)
+    uint8_t serialize()
     {
-      DEBUG_PRINTLN("set eeprom");
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+      uint8_t *buffer = msgBuffer_;
+      for (uint8_t i = 0; i < varN_; ++i)
       {
-        eeprom_write_byte ( (uint8_t*)(uint16_t) address, value);
+        buffer += varList_[i]->serialize(buffer);
       }
-      return (*mmap_[address].value)=value;
+      return buffer - msgBuffer_;
     }
 
-    
-    uint8_t getEEPROM(uint8_t address)
+    uint8_t deserialize()
     {
-      DEBUG_PRINTLN("get eeprom");
-      uint8_t read;
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+      uint8_t *buffer = msgBuffer_;
+      for (uint8_t i = 0; i < varN_; ++i)
       {
-        read = eeprom_read_byte( (uint8_t*)(uint16_t) address );
+        buffer += varList_[i]->deserialize(buffer);
       }
-      return read;
+      return buffer - msgBuffer_;
     }
 
-    void set(uint8_t address, uint8_t value)
+    void load()
     {
-      // Check for size
-      DEBUG_PRINTLN("set");
-      if (address > N_)
+      for (uint8_t i = 0; i < varN_; ++i)
       {
-        DEBUG_PRINTLN("address error");
-        return;
+        varList_[i]->load();
       }
-      // Check for access
-      if (!(mmap_[address].param & MMAP_RW))
-      {
-        DEBUG_PRINTLN(mmap_[address].param);
-        DEBUG_PRINTLN("read only address");
-        return;
-      }
-
-      
-      mmap_[address].param & MMAP_RAM ? 
-        (*mmap_[address].value)=value : setEEPROM(address, value);
     }
 
-    void setFromEEPROM(uint8_t address)
+    void save()
     {
-      // Check for size
-      DEBUG_PRINTLN("set from epprom");
-      if (address > N_)
+      for (uint8_t i = 0; i < varN_; ++i)
       {
-        DEBUG_PRINTLN("address error");
-        return;
+        varList_[i]->save();
       }
-      uint8_t value = 0;
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-      {
-        value = eeprom_read_byte( (uint8_t*)(uint16_t) address );
-      }
-      (*mmap_[address].value)=value;
     }
 
-    uint8_t get(uint8_t address)
+    void setDefault()
     {
-      // Check for size
-      DEBUG_PRINTLN("get");
-      if (address > N_)
+      for (uint8_t i = 0; i < varN_; ++i)
       {
-        DEBUG_PRINTLN("address error");
-        return 0;
+        varList_[i]->setDefault();
       }
-      return mmap_[address].param & MMAP_RAM ? 
-        (*mmap_[address].value) : getEEPROM(address);
+    }
+
+    void reset()
+    {
+      for (uint8_t i = 0; i < varN_; ++i)
+      {
+        varList_[i]->setDefault();
+        varList_[i]->save();
+      }
+    }
+
+    inline uint8_t get(uint8_t index)
+    {
+      return msgBuffer_[index];
+    }
+
+    inline uint8_t set(uint8_t index, uint8_t value)
+    {
+      return msgBuffer_[index] = value;
     }
 
 
   private:
-    // Memory mapping with pointers to RAM and EEPROM data
-    mmap_entry_t *mmap_;
-    const size_t N_;
+    // Message buffer
+    uint8_t *msgBuffer_;
+    // Message buffer length
+    uint8_t bufN_;
+    // Variable list
+    VariablePtr *varList_;
+    // Variable length
+    uint8_t varN_;
 
 }; // End MMap class
 //------------------------------------------------------------------------------

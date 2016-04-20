@@ -16,11 +16,7 @@
 #define DEBUG_PRINTLN(...)
 #endif
 //------------------------------------------------------------------------------
-#include <avr/io.h>
-#include <avr/pgmspace.h>
 #include <avr/sleep.h>
-#include <util/atomic.h>
-#include <string.h>
 #include "mmap.h"
 #include <Arduino.h>
 //------------------------------------------------------------------------------
@@ -29,32 +25,59 @@
  * @brief Virtual class for device with Dynamixel protocol.
  */
 
-
-
 class DeviceDXL {
   public:
-    DeviceDXL(uint8_t id, uint8_t N):
-    id_(id),
-    mmap_(N)
-    {}
-    virtual void initRAM() {}
+    DeviceDXL(uint16_t model, uint8_t firmware, uint8_t N):
+      model_l_(0, 0, MMap::Access::R, 0, 255, (model >> 8*0) & 0xFF), // Low bit
+      model_h_(1, 1, MMap::Access::R, 0, 255, (model >> 8*1) & 0xFF), // High bit
+      firmware_(2, 2, MMap::Access::R, 0, 255, firmware),
+      id_(3, 3, MMap::Access::RW, 1, 254, 1U),
+      baudrate_(4, 4, MMap::Access::RW, 1, 254, 34U),
+      return_delay_(5, 5, MMap::Access::RW, 1, 254, 160U),
+      mmap_(N)
+    {
+      mmap_.registerVariable(&model_l_);
+      mmap_.registerVariable(&model_h_);
+      mmap_.registerVariable(&firmware_);
+      mmap_.registerVariable(&id_);
+      mmap_.registerVariable(&baudrate_);
+      mmap_.registerVariable(&return_delay_);
+    }
 
-    virtual void initEEPROM() {}
+    virtual inline bool onReset() = 0;
 
-    virtual inline __attribute__((always_inline))
-    void setTX() {}
+    virtual inline void setTX() = 0;
 
-    virtual inline __attribute__((always_inline))
-    void setRX() {}
+    virtual inline void setRX() = 0;
+
+    void init()
+    {
+      mmap_.load(); // Load values from EEPROM
+    }
+
+    void reset()
+    {
+      if (onReset())
+      {
+        mmap_.reset(); // Set default values and save EEPROM
+      }
+    }
+
+    // Model
+    MMap::UInt8NV model_l_; // Low bit
+    MMap::UInt8NV model_h_; // High bit
+
+    // Firmware version
+    MMap::UInt8NV firmware_;
 
     // ID
-    uint8_t id_;
+    MMap::UInt8NV id_;
 
     // Baudrate
-    uint8_t baudrate_;
+    MMap::UInt8NV baudrate_;
 
     // Return dalay time
-    uint8_t returnDelay_;
+    MMap::UInt8NV return_delay_;
 
     // Memory mapping
     MMap::MMap mmap_;
@@ -101,6 +124,7 @@ class SerialDXL
       // Set serial port
       port_ = port;
       // Set baudrate using Dynamixel relation
+      // TODO Set baudrate from device info
       port_->begin(baud);
     }
 
@@ -124,13 +148,13 @@ class SerialDXL
           
         case 2: // ID
           // Check error
-          msgState_ = data == device_->id_ ? 3 : 0;
+          msgState_ = data == device_->id_.data ? 3 : 0;
           break;
           
         case 3: // Length
           msgLen_ = data;
           // Checksum
-          msgChecksum_ += device_->id_ + data;
+          msgChecksum_ += device_->id_.data + data;
           // Save length in the RX message buffer
           rxMsgBuf_[0] = data;
           msgState_ = 4;
@@ -172,14 +196,14 @@ class SerialDXL
         switch(rxMsgBuf_[1])
         {
           case 1: // Ping
-            txMsgBuf_[0] = 0xff;
-            txMsgBuf_[1] = 0xff;
-            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[0] = 0xFF;
+            txMsgBuf_[1] = 0xFF;
+            txMsgBuf_[2] = device_->id_.data; //ID 
             txMsgBuf_[3] = 2; // Length
             txMsgBuf_[4] = 0; // Error
             txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
             // Status return delay
-            _delay_us(160);
+            _delay_us(device_->return_delay_.data);
             
             device_->setTX();
             // Send
@@ -191,17 +215,17 @@ class SerialDXL
             break;
 
           case 2: // Read data
-            txMsgBuf_[0] = 0xff;
-            txMsgBuf_[1] = 0xff;
-            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[0] = 0xFF;
+            txMsgBuf_[1] = 0xFF;
+            txMsgBuf_[2] = device_->id_.data; //ID 
             txMsgBuf_[3] = 3; // Length
             txMsgBuf_[4] = 0; // Error
-            // @TODO
+            // TODO Add more than one value
             txMsgBuf_[5] = device_->mmap_.get(rxMsgBuf_[2]);
             
             txMsgBuf_[6] = ~(txMsgBuf_[2]+txMsgBuf_[3]+txMsgBuf_[4]+txMsgBuf_[5]);
             // Status return delay
-            _delay_us(160);
+            _delay_us(device_->return_delay_.data);
 
             device_->setTX();
             // Send
@@ -213,19 +237,18 @@ class SerialDXL
             break;
 
           case 3: // Write data
-            txMsgBuf_[0] = 0xff;
-            txMsgBuf_[1] = 0xff;
-            txMsgBuf_[2] = device_->id_; //ID 
+            txMsgBuf_[0] = 0xFF;
+            txMsgBuf_[1] = 0xFF;
+            txMsgBuf_[2] = device_->id_.data; //ID 
             txMsgBuf_[3] = 2; // Length
 
-            // @TODO
-            // Only one byte
+            // TODO Add more than one value
             device_->mmap_.set(rxMsgBuf_[2],rxMsgBuf_[3]);
 
             txMsgBuf_[4] = 0; // Error
             txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
             // Status return delay
-            _delay_us(160);
+            _delay_us(device_->return_delay_.data);
             
             device_->setTX();
             // Send
