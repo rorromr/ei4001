@@ -34,14 +34,8 @@ class DeviceDXL {
       id_(3, 3, MMap::Access::RW, 1, 254, 1U),
       baudrate_(4, 4, MMap::Access::RW, 1, 254, 34U),
       return_delay_(5, 5, MMap::Access::RW, 1, 254, 160U),
-      mmap_(N)
+      mmap_(N+6)
     {
-      mmap_.registerVariable(&model_l_);
-      mmap_.registerVariable(&model_h_);
-      mmap_.registerVariable(&firmware_);
-      mmap_.registerVariable(&id_);
-      mmap_.registerVariable(&baudrate_);
-      mmap_.registerVariable(&return_delay_);
     }
 
     virtual inline bool onReset() = 0;
@@ -50,8 +44,15 @@ class DeviceDXL {
 
     virtual inline void setRX() = 0;
 
-    void init()
+    void init(uint8_t *msgBuffer, VariablePtr *varList)
     {
+      mmap_.init(msgBuffer, varList);
+      mmap_.registerVariable(&model_l_);
+      mmap_.registerVariable(&model_h_);
+      mmap_.registerVariable(&firmware_);
+      mmap_.registerVariable(&id_);
+      mmap_.registerVariable(&baudrate_);
+      mmap_.registerVariable(&return_delay_);
       mmap_.load(); // Load values from EEPROM
     }
 

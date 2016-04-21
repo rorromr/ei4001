@@ -1,23 +1,12 @@
-#define DEBUG
 #include <SerialDXL.h>
-#include <Arduino.h>
 
-// VERSION LedDXL
-#define VERSION_LED_DXL 1
+// LED DXL basic config
+#define LED_MODEL 100
+#define LED_FIRMWARE 100
+#define LED_MMAP_SIZE 2
 
-// LED MMAP
-#define MODEL_L   0
-#define MODEL_H   1
-#define FIRMWARE  2
-#define ID        3
-#define BAUDRATE  4
-#define RET_DELAY 5
-#define STATE     6
-#define COMMAND   7
-
-#define LED_MMAP_SIZE 4
-
-#define LED_ID 1
+// MMap position for command
+#define LED_COMMAND 6
 
 /**
  * @brief LED control using DXL communication protocol
@@ -34,27 +23,12 @@
 class LedDXL: public DeviceDXL
 {
   public:
-    LedDXL(uint8_t id, uint8_t dir_pin, uint8_t led_pin):
-    DeviceDXL(id, LED_MMAP_SIZE),
+    LedDXL(uint8_t dir_pin, uint8_t reset_pin, uint8_t led_pin):
+    DeviceDXL(LED_MODEL, LED_FIRMWARE, LED_MMAP),
     dir_pin_(dir_pin),
+    reset_pin_(rest_pin),
     led_pin_(led_pin),
-    eeprom_null_(0)
     {
-      /*
-      * MMAP Config
-      * General settings
-      */
-      // Model version
-      MMAP_ENTRY(mmap_field_[MODEL_L], eeprom_null_, MMAP_EEPROM | MMAP_R);
-      MMAP_ENTRY(mmap_field_[MODEL_H], eeprom_null_, MMAP_EEPROM | MMAP_R);
-      // Firmware
-      MMAP_ENTRY(mmap_field_[FIRMWARE], eeprom_null_, MMAP_EEPROM | MMAP_R);
-      // ID
-      MMAP_ENTRY(mmap_field_[ID], id_, MMAP_EEPROM | MMAP_RW);
-      // Baudrate
-      MMAP_ENTRY(mmap_field_[BAUDRATE], baudrate_, MMAP_EEPROM | MMAP_RW);
-      // Return delay
-      MMAP_ENTRY(mmap_field_[RET_DELAY], returnDelay_, MMAP_EEPROM | MMAP_RW);    
       
       /*
       * MMAP Config
@@ -71,28 +45,6 @@ class LedDXL: public DeviceDXL
       // Config LED pin
 
       pinMode(dir_pin_, OUTPUT);
-    }
-
-    void initRAM()
-    {
-      mmap_.setFromEEPROM(ID);
-      mmap_.setFromEEPROM(MODEL_L);
-      mmap_.setFromEEPROM(MODEL_H);
-      mmap_.setFromEEPROM(FIRMWARE);
-      mmap_.setFromEEPROM(BAUDRATE);
-    }
-
-    void initEEPROM()
-    {
-      // Set default ID
-      mmap_.setEEPROM(ID, 15);
-      // Set model
-      mmap_.setEEPROM(MODEL_L, 1);
-      mmap_.setEEPROM(MODEL_H, 0);
-      // Set firmware
-      mmap_.setEEPROM(FIRMWARE, 1);
-      // Baudrate
-      mmap_.setEEPROM(BAUDRATE, 207);
     }
 
     void reset()
