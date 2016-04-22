@@ -20,6 +20,8 @@
 #include "mmap.h"
 #include <Arduino.h>
 //------------------------------------------------------------------------------
+#define DEVICEDXL_MIN_BUFFER 6
+
 /**
  * @class DeviceDXL
  * @brief Virtual class for device with Dynamixel protocol.
@@ -28,13 +30,13 @@
 class DeviceDXL {
   public:
     DeviceDXL(uint16_t model, uint8_t firmware, uint8_t N):
-      model_l_(0, 0, MMap::Access::R, 0, 255, (model >> 8*0) & 0xFF), // Low bit
-      model_h_(1, 1, MMap::Access::R, 0, 255, (model >> 8*1) & 0xFF), // High bit
-      firmware_(2, 2, MMap::Access::R, 0, 255, firmware),
-      id_(3, 3, MMap::Access::RW, 1, 254, 1U),
-      baudrate_(4, 4, MMap::Access::RW, 1, 254, 34U),
-      return_delay_(5, 5, MMap::Access::RW, 1, 254, 160U),
-      mmap_(N+6)
+      model_l_(0, 0, MMap::Access::R, 0U, 255U, (model >> 8U*0U) & 0xFF), // Low bit
+      model_h_(1, 1, MMap::Access::R, 0U, 255U, (model >> 8U*1U) & 0xFF), // High bit
+      firmware_(2, 2, MMap::Access::R, 0U, 255U, firmware),
+      id_(3, 3, MMap::Access::RW, 1U, 254U, 1U),
+      baudrate_(4, 4, MMap::Access::RW, 1U, 254U, 34U),
+      return_delay_(5, 5, MMap::Access::RW, 1U, 254U, 160U),
+      mmap_(N)
     {
     }
 
@@ -44,7 +46,7 @@ class DeviceDXL {
 
     virtual inline void setRX() = 0;
 
-    void init(uint8_t *msgBuffer, VariablePtr *varList)
+    void init(uint8_t *msgBuffer, MMap::VariablePtr *varList)
     {
       mmap_.init(msgBuffer, varList);
       mmap_.registerVariable(&model_l_);
@@ -53,7 +55,6 @@ class DeviceDXL {
       mmap_.registerVariable(&id_);
       mmap_.registerVariable(&baudrate_);
       mmap_.registerVariable(&return_delay_);
-      mmap_.load(); // Load values from EEPROM
     }
 
     void reset()
@@ -203,8 +204,9 @@ class SerialDXL
             txMsgBuf_[3] = 2; // Length
             txMsgBuf_[4] = 0; // Error
             txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
-            // Status return delay
-            _delay_us(device_->return_delay_.data);
+            // TODO Status return delay
+            _delay_us(160);
+            //_delay_us(device_->return_delay_.data);
             
             device_->setTX();
             // Send
@@ -225,8 +227,9 @@ class SerialDXL
             txMsgBuf_[5] = device_->mmap_.get(rxMsgBuf_[2]);
             
             txMsgBuf_[6] = ~(txMsgBuf_[2]+txMsgBuf_[3]+txMsgBuf_[4]+txMsgBuf_[5]);
-            // Status return delay
-            _delay_us(device_->return_delay_.data);
+            // TODO Status return delay
+            _delay_us(160);
+            //_delay_us(device_->return_delay_.data);
 
             device_->setTX();
             // Send
@@ -248,8 +251,9 @@ class SerialDXL
 
             txMsgBuf_[4] = 0; // Error
             txMsgBuf_[5] = ~(txMsgBuf_[2]+txMsgBuf_[3]);
-            // Status return delay
-            _delay_us(device_->return_delay_.data);
+            // TODO Status return delay
+            _delay_us(160);
+            //_delay_us(device_->return_delay_.data);
             
             device_->setTX();
             // Send
