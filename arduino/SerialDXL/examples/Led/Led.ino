@@ -39,16 +39,19 @@ class LedDXL: public DeviceDXL
 
     void init()
     {
+      DEBUG_PRINTLN("INIT");
       /*
        * Register variables
        */
       DeviceDXL::init(msgBuf_, varList_);
       mmap_.registerVariable(&command_);
-
+      
       /*
        * Load default values
        */
+      DEBUG_PRINTLN("Load default");
       mmap_.load(); // Load values from EEPROM
+      DEBUG_PRINT("data: ");DEBUG_PRINTLN(command_.data);
       
       /*
        * Read sensor data
@@ -58,12 +61,15 @@ class LedDXL: public DeviceDXL
 
     void update()
     {
+      DEBUG_PRINTLN("UPDATE");
+      DEBUG_PRINT("data: ");DEBUG_PRINTLN(command_.data);
       if (command_.data == 1) digitalWrite(led_pin_, HIGH);
       else digitalWrite(led_pin_, LOW);
     }
 
     inline bool onReset()
     {
+      DEBUG_PRINTLN("ON RESET");
       return digitalRead(reset_pin_) == HIGH ? true : false;
     }
 
@@ -95,10 +101,14 @@ LedDXL led(6, 7, 13);
 SerialDXL serialDxl;
 
 void setup() {
+  Serial.begin(115200);
+  delay(50);
+  
   // Init serial communication using Dynamixel format
   serialDxl.init(9600, &Serial1 ,&led);
 
   led.init();
+  led.mmap_.serialize();
 }
 
 void loop() {
@@ -110,5 +120,5 @@ void loop() {
   led.update();
   led.mmap_.serialize();
   
-  delay(5);
+  delay(500);
 }
