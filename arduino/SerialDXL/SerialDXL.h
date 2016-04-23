@@ -8,7 +8,7 @@
 /**
  * Debug macros
  */
-#define DEBUG_SERIAL_DXL
+//#define DEBUG_SERIAL_DXL
 #ifdef DEBUG_SERIAL_DXL
 #define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
 #define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
@@ -62,6 +62,7 @@ class DeviceDXL {
     {
       if (onReset())
       {
+        DEBUG_PRINTLN("DEVICE RESET");
         mmap_.reset(); // Set default values and save EEPROM
       }
     }
@@ -108,7 +109,8 @@ class SerialDXL
       msgLen_(0U),
       msgFinish_(0U),
       msgChecksum_(0U),
-      error_(0U)
+      error_(0U),
+      last_call_(0UL)
     {
     }
 
@@ -139,6 +141,23 @@ class SerialDXL
      */
     void process(uint8_t data)
     {
+      #ifdef DEBUG_SERIAL_DXL
+      static uint16_t count = 0UL;
+      #endif
+      // Check message
+      uint32_t now = millis();
+      if (now - last_call_ > 100)
+      {
+        // Reset states
+        DEBUG_PRINTLN("RESET MSG");
+        msgState_ = 0;
+        msgParamIdx_ = 2;
+        msgLen_ = 0;
+        msgChecksum_ = 0;
+        msgFinish_ = 0;
+      }
+      last_call_ = now;
+
       switch(msgState_)
       {
         case 0: // 0xFF
@@ -155,6 +174,7 @@ class SerialDXL
           break;
           
         case 3: // Length
+          DEBUG_PRINTLN("MSG RECEIVED");
           msgLen_ = data;
           // Checksum
           msgChecksum_ += device_->id_.data + data;
@@ -195,10 +215,16 @@ class SerialDXL
       // Process message
       if (msgFinish_)
       {
+        DEBUG_PRINTLN("MSG RECEIVED SUCCESS");
         uint8_t i;
         switch(rxMsgBuf_[1])
         {
           case 1: // Ping
+            #ifdef DEBUG_SERIAL_DXL
+            DEBUG_PRINT("PING ");
+            ++count;
+            DEBUG_PRINTLN(count);
+            #endif
             txMsgBuf_[0] = 0xFF;
             txMsgBuf_[1] = 0xFF;
             txMsgBuf_[2] = device_->id_.data; //ID 
@@ -219,6 +245,7 @@ class SerialDXL
             break;
 
           case 2: // Read data
+            DEBUG_PRINTLN("READ DATA");
             txMsgBuf_[0] = 0xFF;
             txMsgBuf_[1] = 0xFF;
             txMsgBuf_[2] = device_->id_.data; //ID 
@@ -242,6 +269,7 @@ class SerialDXL
             break;
 
           case 3: // Write data
+            DEBUG_PRINTLN("WRITE DATA");
             txMsgBuf_[0] = 0xFF;
             txMsgBuf_[1] = 0xFF;
             txMsgBuf_[2] = device_->id_.data; //ID 
@@ -262,23 +290,14 @@ class SerialDXL
             port_->flush(); // Wait to complete
             
             device_->setRX();
+            // Reset
             msgFinish_ = 0;
             break;
 
         }
       }
+      
     }
-
-    uint8_t* getMsg()
-    {
-      return (msgFinish_) ? rxMsgBuf_ : NULL;
-    }
-
-    void reset()
-    {
-      msgFinish_ = 0;
-    }
-
 
   private:
     // DeviceDXL
@@ -294,6 +313,9 @@ class SerialDXL
 
     // Error state
     uint8_t error_;
+
+    // Last call tick
+    uint32_t last_call_;
 
     // Receive message buffer
     uint8_t rxMsgBuf_[SERIALDXL_MSG_LENGTH];
