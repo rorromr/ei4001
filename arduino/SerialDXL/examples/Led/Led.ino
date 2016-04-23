@@ -3,6 +3,14 @@
 // LED DXL basic config
 #define LED_MODEL 100
 #define LED_FIRMWARE 100
+
+/**
+ * DEVICEDXL_MIN_BUFFER = 6
+ * Is the overhead for dynamixel like devices
+ * Has MODEL_L, MODEL_H, FIRMWARE, ID, BAUDRATE and RETURN DELAY
+ * This variables are inside DeviceDXL class
+ */ 
+
 // We add 2 UInt8 (2 bytes)
 #define LED_MMAP_SIZE DEVICEDXL_MIN_BUFFER+1
 
@@ -12,13 +20,11 @@
 /**
  * @brief LED control using DXL communication protocol
  * @details LED control using Dynamixel communication protocol over RS485.
- * This implementation uses a 4 bytes (uint8_t) memory map (MMap).
- * Example:
- * For HIGH send {0xFF,0xFF, LED_ID, 3, 0x01, 0x01}
- * For LOW send {0xFF,0xFF, LED_ID, 3, 0x01, 0x00}
+ * This implementation uses a 1 uint8_t variable for LED state in address 6 
+ * of memory map (MMap).
  * 
- * @param id ID of device.
  * @param dir_pin Toggle communication pin.
+ * @param reset_pin Pin for reset device
  * @param led_pin LED pin.
  */
 class LedDXL: public DeviceDXL
@@ -61,8 +67,8 @@ class LedDXL: public DeviceDXL
 
     void update()
     {
-      DEBUG_PRINTLN("UPDATE");
-      DEBUG_PRINT("data: ");DEBUG_PRINTLN(command_.data);
+      //DEBUG_PRINTLN("UPDATE");
+      //DEBUG_PRINT("data: ");DEBUG_PRINTLN(command_.data);
       if (command_.data == 1) digitalWrite(led_pin_, HIGH);
       else digitalWrite(led_pin_, LOW);
     }
@@ -105,20 +111,19 @@ void setup() {
   delay(50);
   
   // Init serial communication using Dynamixel format
-  serialDxl.init(9600, &Serial1 ,&led);
+  serialDxl.init(115200, &Serial3 ,&led);
 
   led.init();
+  led.reset();
   led.mmap_.serialize();
 }
 
 void loop() {
   // Update msg buffer
-  while (Serial1.available())
-    serialDxl.process(Serial1.read());
+  while (Serial3.available())
+    serialDxl.process(Serial3.read());
 
   led.mmap_.deserialize();
   led.update();
   led.mmap_.serialize();
-  
-  delay(500);
 }
