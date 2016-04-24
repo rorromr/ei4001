@@ -1,0 +1,3 @@
+[submodule "arduino/SerialDXL"]
+	path = arduino/SerialDXL
+	url = git://github.com/rorromr/serial_dxl.git
