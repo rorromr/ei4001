@@ -2,6 +2,15 @@
 
 ## Torso lift mechanism
 
+## Instalación
+
+```
+git clone https://github.com/rorromr/ei4001.git
+cd ei4001
+git submodule init
+git submodule update
+```
+
 ## Comandos Git
 
 [Guía rápida Git](http://rogerdudler.github.io/git-guide/index.es.html)
