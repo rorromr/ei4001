@@ -4,12 +4,24 @@
 
 ## Instalación
 
+# Repositorio
+
 ```
 git clone https://github.com/rorromr/ei4001.git
 cd ei4001
 git submodule init
 git submodule update
 ```
+# Librerías Arduino
+
+Para la instalación de librerías se crean enlaces simbolicos en el directorio `~/Arduino/libraries/`.
+
+```
+cd ei4001/arduino
+./install.sh
+
+```
+
 
 ## Comandos Git
 
