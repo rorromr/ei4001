@@ -7,6 +7,10 @@
 # define MOTOR_PWM 6
 # define ENCODER_A 2
 # define ENCODER_B 4
+# define FDC1 10
+# define FDC2 11
+# define FDC3 12
+# define FDC4 13
 
 // PID
 double refP,inputP,outputP; //refP recibe referencia de numero de tics
@@ -20,6 +24,9 @@ Encoder encoder(ENCODER_A, ENCODER_B);
 
 // H bridge class
 HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
+
+// Clase Fin de carrera
+Fin_de_Carrera fdc(FDC1, FDC2, FDC3, FDC4);
 
 // Buttons
 uint8_t k1 = 0, k1f = 0;
