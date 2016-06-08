@@ -25,8 +25,6 @@ Encoder encoder(ENCODER_A, ENCODER_B);
 // H bridge class
 HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
 
-// Clase Fin de carrera
-Fin_de_Carrera fdc(FDC1, FDC2, FDC3, FDC4);
 
 // Buttons
 uint8_t k1 = 0, k1f = 0;
