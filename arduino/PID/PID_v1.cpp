@@ -24,7 +24,8 @@
 
 PID::PID(double* Input, double* Output, double* Setpoint,
         double Kp, double Ki, double Kd, int ControllerDirection):
-  deadZoneEn_(false)
+  deadZoneEn_(false),
+  isDeadZone_(false)
 {
 	
     myOutput = Output;
@@ -87,14 +88,14 @@ bool PID::Compute()
       double output = kp * error + ITerm- kd * dInput;
 
          //ANti windup alternativo
-/*       if (output > outMax){
+       if (output > outMax){
          ITerm-= kb*(output-outMax);
          output = outMax;
        }
        else if (output < outMin){
          ITerm += kb*(outMin-output);
          output = outMin;
-       }*/
+       }
 
       // if(output > outMax){
       //   output = outMax;
@@ -108,6 +109,7 @@ bool PID::Compute()
       {
         *myOutput = 0;
         ITerm = 0;
+        isDeadZone_ = true;
       }
       else
       {
@@ -163,20 +165,6 @@ void PID::SetSampleTime(int NewSampleTime)
    }
 }
 
-/* Check(...) *********************************************************
- * Check if controller is in "dead zone". If that happens, desactivate PID  
- ******************************************************************************/
-void PID::Check()
-{
-  if (abs(*mySetpoint-*myInput) < 5){
-    *myOutput = 0;
-    PID::SetMode(MANUAL);
-  }
-  else
-    PID::Compute();
-
-}
-
 
 void PID::setDeadZone(double error)
 {
@@ -186,6 +174,20 @@ void PID::setDeadZone(double error)
 void PID::enableDeadZone(bool enable)
 {
   deadZoneEn_ = enable;
+}
+
+bool PID::isDeadZone()
+{
+  return isDeadZone_;
+}
+
+
+/* Restart(..)
+* Set Iterm to 0*/
+
+void PID::Restart()
+{
+  ITerm = 0;
 }
  
 /* SetOutputLimits(...)****************************************************

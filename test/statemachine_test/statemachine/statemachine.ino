@@ -10,10 +10,10 @@
 # define MOTOR_PWM 6
 # define ENCODER_A 2
 # define ENCODER_B 4
-# define FDC1 10
-# define FDC2 11
-# define FDC3 12
-# define FDC4 13
+# define FDC1 13
+# define FDC2 12
+# define FDC3 11
+# define FDC4 10
 
 enum statemachine {
   INIT,
@@ -27,7 +27,9 @@ enum statemachine sm;
 
 // PID
 double ref, input, output; //ref recibe referencia de numero de tics
-double Kp = 0.11, Ki = 0.05, Kd = 0.007;
+double Kp = 1.1, Ki = 0.11, Kd = 0.007;
+
+long l;
 
 //controladores
 PID pid(&input, &output, &ref, Kp, Ki, Kd, DIRECT);
@@ -42,39 +44,25 @@ HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
 Fin_de_Carrera fdc(FDC1, FDC2, FDC3, FDC4);
 
 
-//Leo posicion desde EEPROM
-long readPosition() {
-  long Pos = 0;
-  long D;
-  int length = sizeof(Pos);
-  for (int i = 0; i < length; i++) {
-    D = EEPROM.read(i);
-    if (i != length-1) {
-      D = D << (8 * (length - i - 1));
-    }
-
-    Pos = Pos | D;
-    D = 0;
-  }
-}
-
-
 void setup() {
+  Serial.begin(115200);
   hbridge.setPwmFrequency(64); //Pin 6, divido frecuencia base 62,5 Khz por 64
 
   pid.SetSampleTime(5);
   pid.SetOutputLimits(-255, 255);
   pid.setDeadZone(30);
   pid.enableDeadZone(true);
-  ref = 5000;
+  ref = 10000;
 
   sm = INIT;
-  encoder.write(readPosition());
+  encoder.write(EEPROM.get(0, l)); //leo la direccion 0, buscando un long
+  Serial.println(encoder.read());
   sm = CHECK;
 
 }
 
 void loop() {
+  Serial.println(encoder.read());
   switch (sm) {
     case CHECK:
       input = encoder.read();
@@ -93,16 +81,17 @@ void loop() {
           break;
 
         case 2:
-
+          Serial.println(encoder.read());
           hbridge.activeBrake();
-          hbridge.backward();
+          pid.Restart();
           ref = encoder.read() - 720; //bajar 2 vueltas
           sm = MOVE;
           break;
 
         case 3:
+          Serial.println(encoder.read());
           hbridge.activeBrake();
-          hbridge.forward();
+          pid.Restart();
           ref = encoder.read() + 720;
           sm = MOVE;
 
