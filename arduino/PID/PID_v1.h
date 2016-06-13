@@ -42,10 +42,13 @@ class PID
     void SetSampleTime(int);              // * sets the frequency, in Milliseconds, with which 
                                           //   the PID calculation is performed.  default is 100
 
-    void Check();
 
     void setDeadZone(double error);
     void enableDeadZone(bool enable);
+
+    void Restart();
+
+    bool isDeadZone();
 										  
 										  
 										  
@@ -85,6 +88,7 @@ class PID
   // Dead Zone
   double deadZone_;
   bool deadZoneEn_;
+  bool isDeadZone_;
 };
 #endif
 

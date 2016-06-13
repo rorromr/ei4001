@@ -4,8 +4,8 @@
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_PIN_READ(base, mask)     (((*(base)) & (mask)) ? 1 : 0)
 
-#define PWM_MAX 35
-#define PWM_MIN 25
+#define PWM_MAX 255
+#define PWM_MIN 0
 #define SAT(x) ( ((x) > PWM_MAX) ? PWM_MAX : ( ((x) < PWM_MIN) ? 0 : (x) ) )
 
 //#define DEBUG
