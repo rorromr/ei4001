@@ -45,7 +45,7 @@
  *	implied, of TU/e.													*
  ************************************************************************/
 
-#include "scl/filters/DPID.hpp"
+#include "DPID.h"
 
 using namespace DFILTERS;
 
@@ -96,6 +96,9 @@ bool DPID::initialize()
 	windup = 0.0;
 	previous_antiwindup = 0.0;
 	previous_windup = 0.0;
+
+	deadZoneEn_ = false;
+    isDeadZone_ = false;
 	
 	return true;
 }
@@ -214,6 +217,13 @@ bool DPID::update(double input)
 	}
 	savePreviousIO(input, output);
 	antiWindup();
+
+	// Dead zone
+    if (deadZoneEn_ && (input < deadZone_ && input > -deadZone_))
+    {
+    	output = 0;
+        isDeadZone_ = true;
+    }
 	
 	return true;
 }
@@ -227,6 +237,17 @@ bool DPID::finalize()
 		previous_outputs[i] = 0.0;		
 		denominator[i+1] = 0.0;
 		numerator[i+1] = 0.0;
+	}
+	output = 0.0;
+	
+	return true;
+}
+
+bool DPID::restart()
+{
+	for ( int i = 0; i < filter_order; i++ ) {
+		previous_inputs[i]  = 0.0;
+		previous_outputs[i] = 0.0;		
 	}
 	output = 0.0;
 	
@@ -272,6 +293,23 @@ bool DPID::setEpsilon (double epsilon)
 	eps = fabs(epsilon);
 	return true;
 }
+
+
+void DPID::setDeadZone(double error)
+{
+  deadZone_ = error;
+}
+
+void DPID::enableDeadZone(bool enable)
+{
+  deadZoneEn_ = enable;
+}
+
+bool DPID::isDeadZone()
+{
+  return isDeadZone_;
+}
+
 
 void DPID::savePreviousIO(double in, double out)
 {

@@ -2,7 +2,7 @@
 #include <SimpleEncoder.h>
 #include <HBridge.h>
 #include <Fin_de_Carrera.h>
-#include <PID_v1.h>
+#include <DPID.h>
 
 // Torso basic config
 #define TORSO_MODEL 100
@@ -37,7 +37,7 @@ class TorsoDXL: public DeviceDXL
     DeviceDXL(TORSO_MODEL, TORSO_FIRMWARE, TORSO_MMAP_SIZE), // Call parent constructor
     dir_pin_(dir_pin),    // Direction pin for RS485
     reset_pin_(reset_pin), // Reset pin
-    command_(TORSO_COMMAND, MMap::Access::RW, 0U, 1U, 1U) // Torso command
+    command_(MMap::Access::RW, MMap::Storage::RAM) // Torso command
     {
       // Config pins
       pinMode(dir_pin_, OUTPUT);
@@ -50,8 +50,9 @@ class TorsoDXL: public DeviceDXL
       /*
        * Register variables
        */
-      DeviceDXL::init(msgBuf_, varList_);
+      DeviceDXL::init();
       mmap_.registerVariable(&command_);
+      mmap_.init();
       
       /*
        * Load default values
@@ -96,11 +97,8 @@ class TorsoDXL: public DeviceDXL
     const uint8_t reset_pin_; // Reset pin
     
     // Torso command
-    MMap::UInt8 command_;
+    MMap::Variable<UInt8, UInt8::type, 0, 1, 1> command_;
     
-    // Memory map
-    uint8_t msgBuf_[TORSO_MMAP_SIZE];
-    MMap::VariablePtr varList_[TORSO_MMAP_SIZE];
 };
 
 
@@ -112,7 +110,7 @@ void setup() {
   delay(50);
   
   // Init serial communication using Dynamixel format
-  serialDxl.init(115200, &Serial3 ,&torso);
+  serialDxl.init(&Serial3 ,&torso);
 
   torso.init();
   torso.reset();

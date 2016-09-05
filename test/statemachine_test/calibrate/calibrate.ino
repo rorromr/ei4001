@@ -2,7 +2,7 @@
 #include <HBridge.h>
 #include <Fin_de_Carrera.h>
 #include <EEPROM.h>
-#include <PID_v1.h>
+#include <DPID.h>
 
 # define MOTOR_B 8
 # define MOTOR_A 7
@@ -17,12 +17,17 @@
 # define FDC2_pos 1800 // 5 vueltas
 # define FDC3_pos 0
 
-// PID
-double ref, input, output; //ref recibe referencia de numero de tics
-double Kp = 1.1, Ki = 0.15, Kd = 0.007;
+//New PID
+double kp = 1.1;
+double kv = 0.007;
+double ki = 0.15;
+double Ts = 0.005;
+int discretization_method = 4;
+double limit = 255;
+double kaw = sqrt(ki*kv);  //backCalculation
 
 //controladores
-PID pid(&input, &output, &ref, Kp, Ki, Kd, DIRECT);
+DFILTERS::DPID pid(kp,kv,ki,Ts,discretization_method,limit,kaw);
 
 //Clase encoder
 Encoder encoder(ENCODER_A, ENCODER_B);
@@ -36,17 +41,21 @@ Fin_de_Carrera fdc(FDC1, FDC2, FDC3, FDC4);
 
 void setup() {
   Serial.begin(115200);
-  pid.SetSampleTime(5);
-  pid.SetOutputLimits(-255, 255);
+
   pid.setDeadZone(30);
   pid.enableDeadZone(true);
   hbridge.setPwmFrequency(64);
+
+
+/**
+Una vez se haya roseado, debe poder recibir un comando que indique en que direccion 
+quiere calibrarse (arriba o abajo) y a que velocidad quiere ir*/
   hbridge.backward();
   hbridge.setPwm(200);
 }
 
 void loop() {
-  Serial.println(encoder.read());
+  //Serial.println(encoder.read());
   if (fdc.getState()) {
     switch (fdc.getIndex()) {
       case 2:
@@ -54,10 +63,8 @@ void loop() {
         encoder.write(FDC2_pos);
         ref = FDC2_pos - 720; //volver 2 vueltas
         while (!pid.isDeadZone()) {
-          input = encoder.read();
-          pid.Compute();
-          hbridge.set((int16_t) output);
-          Serial.println(encoder.read());
+          pid.update(ref - encoder.read());
+          hbridge.set( (int16_t) pid.getOutputAntiwindup());
         }
         EEPROM.put(0, encoder.read());
         break;
@@ -67,10 +74,8 @@ void loop() {
         encoder.write(FDC3_pos);
         ref = FDC3_pos + 720; //volver 2 vueltas
         while (!pid.isDeadZone()) {
-          input = encoder.read();
-          pid.Compute();
-          hbridge.set((int16_t) output);
-          Serial.println(encoder.read());
+          pid.update(ref - encoder.read());
+          hbridge.set( (int16_t) pid.getOutputAntiwindup());
         }
         EEPROM.put(0, encoder.read());
         break;
@@ -80,4 +85,6 @@ void loop() {
   }
 
 }
+
+
 

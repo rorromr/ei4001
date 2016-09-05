@@ -7,7 +7,7 @@
  *
  */
  
-#include "scl/polynomial/Polynomial.hpp"
+#include "Polynomial.h"
 
 //constructor
 Polynomial::Polynomial() :mnTerms(3)

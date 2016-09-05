@@ -4,7 +4,7 @@ bold=$(tput bold)
 red=${bold}$(tput setaf 1)
 reset=$(tput sgr0)
 
-libs=("SerialDXL" "SimpleEncoder" "PID" "HBridge" "Control" "Fin_de_Carrera")
+libs=("SerialDXL" "SimpleEncoder" "PID" "HBridge" "Control" "Fin_de_Carrera" "pid_tue")
 
 if [ ! -d ~/Arduino/libraries/ ]; then
   echo "${red}Arduino libraries directory not found...${reset}"

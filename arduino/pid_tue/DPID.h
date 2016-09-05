@@ -49,8 +49,8 @@
 #define DPID_HPP
 
 #include <math.h>
-#include "scl/filters/DiscretizationMethods.hpp"
-#include "scl/polynomial/Polynomial.hpp"
+#include "DiscretizationMethods.h"
+#include "Polynomial.h"
 
 namespace DFILTERS {
 
@@ -216,6 +216,14 @@ namespace DFILTERS {
 			(no filtering) and output 0
 			*/
 			bool finalize();
+
+
+			/// Filter restart
+			/**
+			Restart previous inputs and outputs
+			*/
+			bool restart();
+
 			
 			/// Get numerator of the filter
 			/** @return numerator of the filter as an array pointer
@@ -249,6 +257,16 @@ namespace DFILTERS {
 			
 			/// Set the epsilon, value used to denote a number very close to zero (or some other specific value) within the bounds of double accuracy
 			bool setEpsilon(double epsilon);
+
+			/// If the controller is close to the target
+			bool isDeadZone();
+
+
+			void setDeadZone(double error);
+    
+
+    		void enableDeadZone(bool enable);
+
 			
 		private:
 			/// Denominator (coefficients) of a filter
@@ -293,6 +311,13 @@ namespace DFILTERS {
 			
 			/// Anti-windup coefficient
 			double kaw;
+
+			  // Dead Zone
+  			double deadZone_;
+ 			
+ 			bool deadZoneEn_;
+  			
+  			bool isDeadZone_;
 										
 			/// Update of a filter IO history, required for implementation
 			/** 
