@@ -17,6 +17,8 @@
 # define FDC2_pos 1800 // 5 vueltas
 # define FDC3_pos 0
 
+double ref;
+
 //New PID
 double kp = 1.1;
 double kv = 0.007;

@@ -19,6 +19,7 @@
 # define FDC2_pos 1800 // 5 vueltas
 # define FDC3_pos 0
 
+
 enum statemachine {
   INIT,
   CHECK,
@@ -38,6 +39,8 @@ int discretization_method = 4;
 double limit = 255;
 double kaw = sqrt(ki*kv);  //backCalculation
 
+double ref;
+double input;
 
 long l;
 
