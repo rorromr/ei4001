@@ -3,6 +3,7 @@
   #include <HBridge.h>
   #include <Fin_de_Carrera.h>
   #include <DPID.h>
+  #include <TimerThree.h>
   
   # define MOTOR_B 8
   # define MOTOR_A 7
@@ -62,7 +63,12 @@
         goalPosition_(MMap::Access::RW, MMap::Storage::RAM),  // Torso command
         movingSpeed_(MMap::Access::RW, MMap::Storage::RAM),
         presentPosition_(MMap::Access::R, MMap::Storage::RAM),
-        presentSpeed_(MMap::Access::R, MMap::Storage::RAM)
+        presentSpeed_(MMap::Access::R, MMap::Storage::RAM),
+        kp_(MMap::Access::RW, MMap::Storage::RAM),
+        ki_(MMap::Access::RW, MMap::Storage::RAM),
+        kv_(MMap::Access::RW, MMap::Storage::RAM),
+        limits_(MMap::Access::RW, MMap::Storage::RAM),
+        emergencyState_(MMap::Access::R, MMap::Storage::RAM)
       {
         // Config pins
         pinMode(dir_pin_, OUTPUT);
@@ -70,6 +76,8 @@
         hbridge_->setPwmFrequency(64);
         pid_->setDeadZone(30);
         pid_->enableDeadZone(true);
+        Timer3.initializate(1000); // 1000 us, 1 khz
+        Timer3.attachInterrupt(update);
       }
   
       void init()
@@ -83,6 +91,11 @@
         mmap_.registerVariable(&movingSpeed_);
         mmap_.registerVariable(&presentPosition_);
         mmap_.registerVariable(&presentSpeed_);
+        mmap_.registerVariable(&kp_);
+        mmap_.registerVariable(&ki_);
+        mmap_.registerVariable(&kv_);
+        mmap_.registerVariable(&limits_);
+        mmap_.registerVariable(&emergencyState_);
   
         mmap_.init();
   
@@ -203,6 +216,13 @@
       MMap::Variable<UInt16, UInt16::type, 0, 57600, 0> presentPosition_;
       MMap::Variable<UInt8, UInt8::type, 0, 255, 0> presentSpeed_;
 
+      MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kp_;
+      MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> ki_;
+      MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kv_;
+      MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> limits_;
+
+      MMap::Variable<UInt8, UInt8::type, 0, 1, 0> emergencyState_;
+
   
   };
   
@@ -211,7 +231,7 @@
   double kp = 1.1;
   double kv = 0.007;
   double ki = 0.15;
-  double Ts = 0.005;
+  double Ts = 0.001;
   int discretization_method = 4;
   double limit = 255;
   double kaw = sqrt(ki*kv);
@@ -250,6 +270,4 @@
     // Update msg buffer
     while (Serial3.available())
       serialDxl.process(Serial3.read());
-  
-    torso.update();
   }
