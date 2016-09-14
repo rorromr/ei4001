@@ -142,10 +142,10 @@ class TimerThree
 	isrCallback = isr;
 	TIMSK3 = _BV(TOIE3);
     }
-    void attachInterrupt(void (*isr)(), unsigned long microseconds) __attribute__((always_inline)) {
+    /*void attachInterrupt(void (*isr)(), unsigned long microseconds) __attribute__((always_inline)) {
 	if(microseconds > 0) setPeriod(microseconds);
 	attachInterrupt(isr);
-    }
+    }*/
     void detachInterrupt() __attribute__((always_inline)) {
 	TIMSK3 = 0;
     }

@@ -14,11 +14,14 @@
   # define FDC2 12
   # define FDC3 11
   # define FDC4 10
+
+  # define FDC2_pos 10000 
+  # define FDC3_pos 0
   
   // Torso basic config
   #define TORSO_MODEL 100
   #define TORSO_FIRMWARE 100
-  #define TORSO_MMAP_SIZE 4
+  #define TORSO_MMAP_SIZE 9
   
   enum statemachine {
     INIT,
@@ -37,8 +40,12 @@
      Estado emergencia
      Kp, Ki, Kv, Ts, modo_discretizacion, limit
      Referencia*/
-  
-  
+  DeviceDXL<TORSO_MODEL, TORSO_FIRMWARE>* mainDevice = NULL;
+  void __attribute__((always_inline)) controlLoopUpdate()
+  {
+    if (mainDevice == NULL) return;
+    mainDevice->update();
+  }
   
   /**
    * @brief Torso controller using DXL communication protocol
@@ -76,8 +83,8 @@
         hbridge_->setPwmFrequency(64);
         pid_->setDeadZone(30);
         pid_->enableDeadZone(true);
-        Timer3.initializate(1000); // 1000 us, 1 khz
-        Timer3.attachInterrupt(update);
+        Timer3.initialize(1000); // 1000 us, 1 khz
+        Timer3.attachInterrupt(controlLoopUpdate);
       }
   
       void init()
@@ -89,13 +96,14 @@
         DeviceDXL::init();
         mmap_.registerVariable(&goalPosition_);
         mmap_.registerVariable(&movingSpeed_);
+        mmap_.registerVariable(&emergencyState_);
         mmap_.registerVariable(&presentPosition_);
         mmap_.registerVariable(&presentSpeed_);
         mmap_.registerVariable(&kp_);
         mmap_.registerVariable(&ki_);
         mmap_.registerVariable(&kv_);
         mmap_.registerVariable(&limits_);
-        mmap_.registerVariable(&emergencyState_);
+        
   
         mmap_.init();
   
@@ -116,16 +124,20 @@
       {
         switch (sm) {
           case INIT:
+            noInterrupts();
             mmap_.deserialize();
+            interrupts();
             sm = CHECK;
             break;
   
           case CHECK:
             presentPosition_.data = encoder_->read();
             if (fdc_->getState()) {
+              emergencyState_.data = 1;
               sm = ERROR;
             }
             else {
+              emergencyState_.data = 0;
               sm = MOVE;
             }
             break;
@@ -133,31 +145,31 @@
           case ERROR:
             switch (fdc_->getIndex()) {
               case 1:
-                mmap_.serialize();
                 // Pasar a modo manual
                 pid_->restart();
   
                 break;
   
               case 2:
-                mmap_.serialize();
                 hbridge_->activeBrake(); //Cuanto seguirá subiendo por inercia?
                 pid_->restart();
+                encoder_->write(FDC2_pos);
+                presentPosition_.data = FDC2_pos;
                 goalPosition_.data = presentPosition_.data - 720;  // Solo de prueba, que baje 5 cm en realidad
                 sm = MOVE;
                 break;
   
               case 3:
-                mmap_.serialize();
                 hbridge_->activeBrake();
                 pid_->restart();
+                encoder_->write(FDC3_pos);
+                presentPosition_.data = FDC3_pos;
                 goalPosition_.data = presentPosition_.data + 720;  // Solo de prueba, que suba 5 cm en realidad
                 sm = MOVE;
   
                 break;
   
               case 4:
-                mmap_.serialize();
                 // Pasar a modo manual
                 pid_->restart();
   
@@ -169,14 +181,15 @@
   
             pid_->update(goalPosition_.data - presentPosition_.data);
             hbridge_->set( (int16_t) pid_->getOutputAntiwindup());
-            presentSpeed_.data = pid_->getOutputAntiwindup();
-            mmap_.serialize();
+            presentSpeed_.data = (int8_t) pid_->getOutputAntiwindup();
             sm = STATE;
             break;
   
           case STATE:
             delay(5);
+            noInterrupts();
             mmap_.deserialize();
+            interrupts();
             sm = CHECK;
             break;
   
@@ -219,7 +232,7 @@
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kp_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> ki_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kv_;
-      MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> limits_;
+      MMap::Variable<UInt8, UInt8::type, -1000000, 1000000, 0> limits_;
 
       MMap::Variable<UInt8, UInt8::type, 0, 1, 0> emergencyState_;
 
@@ -238,6 +251,7 @@
   
   
   //controlador
+
   DFILTERS::DPID pid(kp, kv, ki, Ts, discretization_method, limit, kaw);
   
   //Clase encoder
@@ -251,10 +265,13 @@
   
   // Torso Controller
   TorsoDXL torso(6, 7, &encoder, &pid, &hbridge, &fdc);
+
   
   SerialDXL<TorsoDXL> serialDxl;
   
+  
   void setup() {
+    mainDevice = &torso;
     Serial.begin(115200);
     delay(50);
   
@@ -270,4 +287,8 @@
     // Update msg buffer
     while (Serial3.available())
       serialDxl.process(Serial3.read());
+
+    torso.mmap_.serialize();
+
+    
   }

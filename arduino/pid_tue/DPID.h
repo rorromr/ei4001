@@ -267,6 +267,11 @@ namespace DFILTERS {
 
     		void enableDeadZone(bool enable);
 
+    		double getLimit();
+
+    		void setLimit(double _limit);
+
+
 			
 		private:
 			/// Denominator (coefficients) of a filter
