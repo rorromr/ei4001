@@ -33,13 +33,7 @@
   
   enum statemachine sm;
   
-  
-  
-  /* Pos.actual
-     PWM
-     Estado emergencia
-     Kp, Ki, Kv, Ts, modo_discretizacion, limit
-     Referencia*/
+
   DeviceDXL<TORSO_MODEL, TORSO_FIRMWARE>* mainDevice = NULL;
   void __attribute__((always_inline)) controlLoopUpdate()
   {
@@ -182,7 +176,8 @@
             pid_->update(goalPosition_.data - presentPosition_.data);
             hbridge_->set( (int16_t) pid_->getOutputAntiwindup());
             presentSpeed_.data = (int8_t) pid_->getOutputAntiwindup();
-            sm = STATE;
+            emergencyState_.data = pid_->isDeadZone() ? 0 : 1;
+            sm = emergencyState_.data == 1? MOVE : STATE; 
             break;
   
           case STATE:
