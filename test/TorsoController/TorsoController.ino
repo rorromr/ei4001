@@ -126,6 +126,7 @@
   
           case CHECK:
             presentPosition_.data = encoder_->read();
+            pid_->setLimit(limits_.data);
             if (fdc_->getState()) {
               emergencyState_.data = 1;
               sm = ERROR;
@@ -139,6 +140,7 @@
           case ERROR:
             switch (fdc_->getIndex()) {
               case 1:
+                hbridge_->activeBrake();
                 // Pasar a modo manual
                 pid_->restart();
   
@@ -164,6 +166,7 @@
                 break;
   
               case 4:
+                hbridge_->activeBrake();
                 // Pasar a modo manual
                 pid_->restart();
   
@@ -227,7 +230,7 @@
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kp_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> ki_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kv_;
-      MMap::Variable<UInt8, UInt8::type, -1000000, 1000000, 0> limits_;
+      MMap::Variable<UInt8, UInt8::type, 0, 255, 0> limits_;
 
       MMap::Variable<UInt8, UInt8::type, 0, 1, 0> emergencyState_;
 
