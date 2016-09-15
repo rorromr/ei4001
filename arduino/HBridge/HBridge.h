@@ -6,9 +6,9 @@
 class HBridge
 {
 private:
-  uint8_t _pinPwm;
-  uint8_t _pinA;
-  uint8_t _pinB;
+  uint8_t _lPwm;
+  uint8_t _rPwm;
+  uint8_t _pwm;
 
 public:
   
@@ -19,7 +19,7 @@ public:
    * @param pinA
    * @param pinB
    */
-  HBridge(uint8_t pinPwm, uint8_t pinA, uint8_t pinB);
+  HBridge(uint8_t rPwm, uint8_t lPwm);
   
   void forward();
 
@@ -29,7 +29,7 @@ public:
 
   void activeBrake();
 
-  void setPwm(uint8_t pwm);
+  void setPwm(const uint8_t pwm);
 
   void set(int16_t target);
 

@@ -5,17 +5,16 @@
   #include <DPID.h>
   #include <TimerThree.h>
   
-  # define MOTOR_B 8
-  # define MOTOR_A 7
-  # define MOTOR_PWM 6
+  # define MOTOR_PWM_R 9
+  # define MOTOR_PWM_L 8
   # define ENCODER_A 2
   # define ENCODER_B 4
-  # define FDC1 13
-  # define FDC2 12
-  # define FDC3 11
-  # define FDC4 10
+  # define FDC1 28
+  # define FDC2 30
+  # define FDC3 32
+  # define FDC4 34
 
-  # define FDC2_pos 10000 
+  # define FDC2_pos 5000 
   # define FDC3_pos 0
   
   // Torso basic config
@@ -35,7 +34,9 @@
   
 
   DeviceDXL<TORSO_MODEL, TORSO_FIRMWARE>* mainDevice = NULL;
-  void __attribute__((always_inline)) controlLoopUpdate()
+  
+  static inline __attribute__((always_inline))
+  void controlLoopUpdate()
   {
     if (mainDevice == NULL) return;
     mainDevice->update();
@@ -65,6 +66,7 @@
         movingSpeed_(MMap::Access::RW, MMap::Storage::RAM),
         presentPosition_(MMap::Access::R, MMap::Storage::RAM),
         presentSpeed_(MMap::Access::R, MMap::Storage::RAM),
+        lastPosition_(MMap::Access::R, MMap::Storage::RAM),
         kp_(MMap::Access::RW, MMap::Storage::RAM),
         ki_(MMap::Access::RW, MMap::Storage::RAM),
         kv_(MMap::Access::RW, MMap::Storage::RAM),
@@ -74,15 +76,16 @@
         // Config pins
         pinMode(dir_pin_, OUTPUT);
         pinMode(reset_pin_, OUTPUT);
-        hbridge_->setPwmFrequency(64);
+        //hbridge_->setPwmFrequency(64);
         pid_->setDeadZone(30);
         pid_->enableDeadZone(true);
-        Timer3.initialize(1000); // 1000 us, 1 khz
+        Timer3.initialize(10000); // 1000 us, 1 khz
         Timer3.attachInterrupt(controlLoopUpdate);
       }
   
       void init()
       {
+        
         DEBUG_PRINTLN("INIT");
         /*
          * Register variables
@@ -93,10 +96,12 @@
         mmap_.registerVariable(&emergencyState_);
         mmap_.registerVariable(&presentPosition_);
         mmap_.registerVariable(&presentSpeed_);
+        mmap_.registerVariable(&lastPosition_);
         mmap_.registerVariable(&kp_);
         mmap_.registerVariable(&ki_);
         mmap_.registerVariable(&kv_);
         mmap_.registerVariable(&limits_);
+        
         
   
         mmap_.init();
@@ -106,6 +111,7 @@
          */
         DEBUG_PRINTLN("Load default");
         mmap_.load(); // Load values from EEPROM
+        presentPosition_.data = lastPosition_.data;
         //DEBUG_PRINT("data: ");DEBUG_PRINTLN(command_.data);
   
         /*
@@ -226,7 +232,7 @@
   
       MMap::Variable<UInt16, UInt16::type, 0, 57600, 0> presentPosition_;
       MMap::Variable<UInt8, UInt8::type, 0, 255, 0> presentSpeed_;
-
+      MMap::Variable<UInt16, UInt16::type, 0, 57600, 0> lastPosition_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kp_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> ki_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kv_;
@@ -239,14 +245,14 @@
   
   
   //New PID
-  double kp = 1.1;
-  double kv = 0.007;
+  double kp = 0.9;
+  double kv = 0.15;
   double ki = 0.15;
-  double Ts = 0.001;
+  double Ts = 0.005;
   int discretization_method = 4;
   double limit = 255;
   double kaw = sqrt(ki*kv);
-  
+    
   
   //controlador
 
@@ -256,17 +262,15 @@
   Encoder encoder(ENCODER_A, ENCODER_B);
   
   // H bridge class
-  HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
+  HBridge hbridge(MOTOR_PWM_R, MOTOR_PWM_L);
   
   // Clase Fin de carrera
   Fin_de_Carrera fdc(FDC1, FDC2, FDC3, FDC4);
   
   // Torso Controller
-  TorsoDXL torso(6, 7, &encoder, &pid, &hbridge, &fdc);
+  TorsoDXL torso(7, 6, &encoder, &pid, &hbridge, &fdc);
 
-  
-  SerialDXL<TorsoDXL> serialDxl;
-  
+  SerialDXL<TorsoDXL> serialDxl;  
   
   void setup() {
     mainDevice = &torso;
@@ -278,7 +282,10 @@
   
     torso.init();
     torso.reset();
+    noInterrupts();
     torso.mmap_.serialize();
+    interrupts();
+    
   }
   
   void loop() {
@@ -286,7 +293,9 @@
     while (Serial3.available())
       serialDxl.process(Serial3.read());
 
+    noInterrupts();
     torso.mmap_.serialize();
+    interrupts();
 
     
   }

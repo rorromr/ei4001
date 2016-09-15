@@ -5,18 +5,17 @@
 #include <EEPROM.h>
 
 
-# define MOTOR_B 8
-# define MOTOR_A 7
-# define MOTOR_PWM 6
+# define MOTOR_PWM_R 9
+# define MOTOR_PWM_L 8
 # define ENCODER_A 2
 # define ENCODER_B 4
-# define FDC1 13
-# define FDC2 12
-# define FDC3 11
-# define FDC4 10
+# define FDC1 28
+# define FDC2 30
+# define FDC3 32
+# define FDC4 34
 
 
-# define FDC2_pos 1800 // 5 vueltas
+# define FDC2_pos 4000 // 5 vueltas
 # define FDC3_pos 0
 
 
@@ -31,8 +30,8 @@ enum statemachine {
 enum statemachine sm;
 
 //New PID
-double kp = 1.1;
-double kv = 0.007;
+double kp = 0.9;
+double kv = 0.15;
 double ki = 0.15;
 double Ts = 0.005;
 int discretization_method = 4;
@@ -51,7 +50,8 @@ DFILTERS::DPID pid(kp,kv,ki,Ts,discretization_method,limit,kaw);
 Encoder encoder(ENCODER_A, ENCODER_B);
 
 // H bridge class
-HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
+
+HBridge hbridge(MOTOR_PWM_R, MOTOR_PWM_L);
 
 // Clase Fin de carrera
 Fin_de_Carrera fdc(FDC1, FDC2, FDC3, FDC4);
@@ -63,17 +63,16 @@ void setup() {
 
   pid.setDeadZone(30);
   pid.enableDeadZone(true);
-  ref = 10000;
+  ref = 5000;
 
   sm = INIT;
-  encoder.write(EEPROM.get(0, l)); //leo la direccion 0, buscando un long
   //Serial.println(encoder.read());
   sm = CHECK;
 
 }
 
 void loop() {
-  //Serial.println(encoder.read());
+  Serial.println(encoder.read());
   switch (sm) {
     case CHECK:
       input = encoder.read();
@@ -95,6 +94,7 @@ void loop() {
           //Serial.println(encoder.read());
           hbridge.activeBrake(); //Cuanto seguirá subiendo por inercia?
           pid.restart();
+          encoder.write(FDC2_pos);
           ref = encoder.read() - 720; //bajar 2 vueltas
           sm = MOVE;
           break;
@@ -103,6 +103,7 @@ void loop() {
           //Serial.println(encoder.read());
           hbridge.activeBrake();
           pid.restart();
+          encoder.write(FDC3_pos);
           ref = encoder.read() + 720;
           sm = MOVE;
 
