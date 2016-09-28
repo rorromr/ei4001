@@ -2,9 +2,8 @@
 #include "SimpleEncoder.h"
 #include "HBridge.h"
 
-# define MOTOR_B 8
-# define MOTOR_A 7
-# define MOTOR_PWM 6
+# define MOTOR_PWM_R 9
+# define MOTOR_PWM_L 8
 # define ENCODER_A 2
 # define ENCODER_B 4
 
@@ -22,24 +21,17 @@ DFILTERS::DPID pid(kp,kv,ki,Ts,discretization_method,limit,kaw);
 
 Encoder encoder(ENCODER_A, ENCODER_B);
 
-HBridge hbridge(MOTOR_PWM, MOTOR_A, MOTOR_B);
-
+HBridge hbridge(MOTOR_PWM_R, MOTOR_PWM_L);
 
 void setup () {
-Serial.begin(9600);
-
-hbridge.setPwmFrequency(64);
-
-
-  
+    Serial.begin(9600);
+    //hbridge.setPwmFrequency(64);
 }
 
 
 void loop() {
-	pid.update(ref - encoder.read());
-	hbridge.set( (int16_t) pid.getOutput());
-
-
-  
+    pid.update(ref - encoder.read());
+    hbridge.set( (int16_t) pid.getOutput());
+    delay(5);
 }
 

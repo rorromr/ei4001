@@ -1,6 +1,6 @@
 #include <Fin_de_Carrera.h>
 
-Fin_de_Carrera fdc(4,5,6,7); //Siempre colocar el comun a tierra
+Fin_de_Carrera fdc(28,30,32,34); //Siempre colocar el comun a tierra
 
 void setup() {
   Serial.begin(115200);
@@ -23,7 +23,7 @@ void loop() {
       break;
       }  
   }
-  delay(100);
+  delay(10);
 
 }
 

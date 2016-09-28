@@ -310,6 +310,14 @@ bool DPID::isDeadZone()
   return isDeadZone_;
 }
 
+double DPID::getLimit(){
+	return limit;
+}
+
+void DPID::setLimit(double _limit){
+	limit = fabs(_limit);
+}
+
 
 void DPID::savePreviousIO(double in, double out)
 {

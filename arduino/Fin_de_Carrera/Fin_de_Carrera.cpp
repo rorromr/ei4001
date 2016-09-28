@@ -47,7 +47,8 @@ void Fin_de_Carrera::fdc()
 
 }
 
-// Si hubo interrupcion, vuelvo a false el indicador. Retorno el indice del pin que se acitvo
+/* Si hubo interrupcion, vuelvo a false el indicador. 
+Retorno el indice del pin que se acitvo*/
 int Fin_de_Carrera::getIndex()
 {
   _flag = 0;
