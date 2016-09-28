@@ -35,7 +35,7 @@
 
   DeviceDXL<TORSO_MODEL, TORSO_FIRMWARE>* mainDevice = NULL;
   
-  static inline __attribute__((always_inline))
+  //static inline __attribute__((always_inline))
   void controlLoopUpdate()
   {
     if (mainDevice == NULL) return;
@@ -79,8 +79,6 @@
         //hbridge_->setPwmFrequency(64);
         pid_->setDeadZone(30);
         pid_->enableDeadZone(true);
-        Timer3.initialize(10000); // 1000 us, 1 khz
-        Timer3.attachInterrupt(controlLoopUpdate);
       }
   
       void init()
@@ -285,6 +283,9 @@
     noInterrupts();
     torso.mmap_.serialize();
     interrupts();
+
+    Timer3.initialize(10000); // 1000 us, 1 khz
+    Timer3.attachInterrupt(controlLoopUpdate);
     
   }
   
