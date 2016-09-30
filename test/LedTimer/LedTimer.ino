@@ -139,7 +139,7 @@ void setup() {
 
   pinMode(A1, OUTPUT);
   mainDevice = &led;
-  Timer3.initialize(500); // 1000 us, 1 khz
+  Timer3.initialize(1000000); // 1000 us, 1 khz
   Timer3.attachInterrupt(controlLoopUpdate);
 }
 

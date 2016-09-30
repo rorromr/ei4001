@@ -67,7 +67,7 @@ DPID::DPID(const DPID &x)
 	eps = x.eps;
 }
 
-DPID::DPID (double kp, double kv, double ki, double _Ts, int method, double _limit, double _kaw) :eps(1e-8)
+DPID::DPID (float kp, float kv, float ki, float _Ts, int method, float _limit, float _kaw) :eps(1e-8)
 {
 	initialize();
 	configure(kp, kv, ki, _Ts, method, _limit, _kaw);
@@ -103,7 +103,7 @@ bool DPID::initialize()
 	return true;
 }
 
-bool DPID::configure(double kp, double kv, double ki, double _Ts, int method, double _limit, double _kaw)
+bool DPID::configure(float kp, float kv, float ki, float _Ts, int method, float _limit, float _kaw)
 {
 	// Ensure valid input parameters and cast paramter method from int to DiscretizationMethod type (required for enumeration check)
 	if ( (fabs(kp) < eps && fabs(kv) < eps) || fabs(_Ts) < eps || method < 1 || method > 5)
@@ -114,14 +114,14 @@ bool DPID::configure(double kp, double kv, double ki, double _Ts, int method, do
 	limit = fabs(_limit);
 	kaw = fabs(_kaw);
 
-	double N = 100.0;
-	double alpha, wp;
-	double zp1=1.0;
-	double zp2=exp(-N*Ts);
-	double zz1=exp(Ts*(-kp*N-ki+sqrt(pow(kp*N+ki,2)-4*ki*(kp+kv*N)))/(2*(kp+kv*N)));
-	double zz2=exp(Ts*(-kp*N-ki-sqrt(pow(kp*N+ki,2)-4*ki*(kp+kv*N)))/(2*(kp+kv*N)));
+	float N = 100.0;
+	float alpha, wp;
+	float zp1=1.0;
+	float zp2=exp(-N*Ts);
+	float zz1=exp(Ts*(-kp*N-ki+sqrt(pow(kp*N+ki,2)-4*ki*(kp+kv*N)))/(2*(kp+kv*N)));
+	float zz2=exp(Ts*(-kp*N-ki-sqrt(pow(kp*N+ki,2)-4*ki*(kp+kv*N)))/(2*(kp+kv*N)));
 
-	double bD[filter_order+1], aD[filter_order+1];
+	float bD[filter_order+1], aD[filter_order+1];
 	
 	Polynomial numCont(filter_order);
 	Polynomial denCont(filter_order);
@@ -208,7 +208,7 @@ bool DPID::configure(double kp, double kv, double ki, double _Ts, int method, do
 	return result;
 }
 
-bool DPID::update(double input)
+bool DPID::update(float input)
 {
 	output  = numerator[0] * input;
 	for ( int i = 1; i <= filter_order; i++ ) {
@@ -254,37 +254,37 @@ bool DPID::restart()
 	return true;
 }
 
-double* DPID::getNumerator () 
+float* DPID::getNumerator () 
 {
 	return numerator;
 }
 
-double* DPID::getDenominator ()
+float* DPID::getDenominator ()
 {
 	return denominator;
 }
 
-double* DPID::getPreviousInputs ()
+float* DPID::getPreviousInputs ()
 {
 	return previous_inputs;
 }
 
-double* DPID::getPreviousOutputs ()
+float* DPID::getPreviousOutputs ()
 {
 	return previous_outputs;
 }
 
-double DPID::getOutput ()
+float DPID::getOutput ()
 {
 	return output;
 }
 
-double DPID::getOutputAntiwindup ()
+float DPID::getOutputAntiwindup ()
 {
 	return output_antiwindup;
 }
 
-bool DPID::setEpsilon (double epsilon)
+bool DPID::setEpsilon (float epsilon)
 {
 	// Ensure nonzero value for eps
 	if (epsilon == 0)
@@ -295,7 +295,7 @@ bool DPID::setEpsilon (double epsilon)
 }
 
 
-void DPID::setDeadZone(double error)
+void DPID::setDeadZone(float error)
 {
   deadZone_ = error;
 }
@@ -310,16 +310,16 @@ bool DPID::isDeadZone()
   return isDeadZone_;
 }
 
-double DPID::getLimit(){
+float DPID::getLimit(){
 	return limit;
 }
 
-void DPID::setLimit(double _limit){
+void DPID::setLimit(float _limit){
 	limit = fabs(_limit);
 }
 
 
-void DPID::savePreviousIO(double in, double out)
+void DPID::savePreviousIO(float in, float out)
 {
 	for ( int i = filter_order-1; i > 0; i-- ) {
 		previous_outputs[i] = previous_outputs[i-1];
@@ -329,7 +329,7 @@ void DPID::savePreviousIO(double in, double out)
 	previous_inputs[0]  = in;
 }
 
-void DPID::cont2discrete(double* denDiscrete, double* numDiscrete, Polynomial &p, Polynomial &q, Polynomial &denCont, Polynomial &numCont) 
+void DPID::cont2discrete(float* denDiscrete, float* numDiscrete, Polynomial &p, Polynomial &q, Polynomial &denCont, Polynomial &numCont) 
 {
 	Polynomial polynom_den(filter_order);
 	Polynomial polynom_num(filter_order);
@@ -371,7 +371,7 @@ void DPID::cont2discrete(double* denDiscrete, double* numDiscrete, Polynomial &p
 	}
 }
 
-bool DPID::coefficientNormalization(double* den, double* num) 
+bool DPID::coefficientNormalization(float* den, float* num) 
 {
 	if (fabs(den[0]) < eps) {
 		return false;
@@ -386,8 +386,8 @@ bool DPID::coefficientNormalization(double* den, double* num)
 
 bool DPID::antiWindup()
 {
-	double bD[2], aD[2];
-	double alpha, wp;
+	float bD[2], aD[2];
+	float alpha, wp;
 	
 	switch (enum_method){
 		case EulerBackward: 
@@ -447,7 +447,7 @@ bool DPID::antiWindup()
 	previous_antiwindup = anti_windup;
 
 	// Value of the output before saturation block
-	double output_tmp = output + anti_windup;
+	float output_tmp = output + anti_windup;
 	
 	// Final value of the output
 	output_antiwindup = output_tmp;

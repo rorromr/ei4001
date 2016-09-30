@@ -3,6 +3,7 @@
   #include <HBridge.h>
   #include <Fin_de_Carrera.h>
   #include <DPID.h>
+  #include "DigitalIO.h"
   #include <TimerThree.h>
   
   # define MOTOR_PWM_R 9
@@ -21,6 +22,8 @@
   #define TORSO_MODEL 100
   #define TORSO_FIRMWARE 100
   #define TORSO_MMAP_SIZE 9
+
+  DigitalPin<13> pin13;
   
   enum statemachine {
     INIT,
@@ -188,7 +191,7 @@
             break;
   
           case STATE:
-            delay(5);
+            //delay(5);
             noInterrupts();
             mmap_.deserialize();
             interrupts();
@@ -243,13 +246,13 @@
   
   
   //New PID
-  double kp = 0.9;
-  double kv = 0.15;
-  double ki = 0.15;
-  double Ts = 0.005;
+  float kp = 0.9;
+  float kv = 0.15;
+  float ki = 0.15;
+  float Ts = 0.005;
   int discretization_method = 4;
-  double limit = 255;
-  double kaw = sqrt(ki*kv);
+  float limit = 255;
+  float kaw = sqrt(ki*kv);
     
   
   //controlador
@@ -273,7 +276,7 @@
   void setup() {
     mainDevice = &torso;
     Serial.begin(115200);
-    delay(50);
+    pin13.mode(OUTPUT);
   
     // Init serial communication using Dynamixel format
     serialDxl.init(&Serial3 , &torso);
@@ -284,19 +287,21 @@
     torso.mmap_.serialize();
     interrupts();
 
-    Timer3.initialize(10000); // 1000 us, 1 khz
+    Timer3.initialize(1000); // 1000 us, 1 khz
     Timer3.attachInterrupt(controlLoopUpdate);
     
   }
   
   void loop() {
     // Update msg buffer
+    pin13.high();
     while (Serial3.available())
       serialDxl.process(Serial3.read());
 
     noInterrupts();
     torso.mmap_.serialize();
     interrupts();
+    pin13.low();
 
     
   }

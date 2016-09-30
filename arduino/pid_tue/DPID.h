@@ -172,7 +172,7 @@ namespace DFILTERS {
 			(1- Euler backward, 2- Euler forward, 3- Tustin, 
 			4- Prewarp Tustin, 5- Zero-order hold, 6- Zero-pole matching)
 			*/
-			DPID (double kp, double kv, double ki, double _Ts, int method=4, double _limit=0.0, double _kaw=0.0);
+			DPID (float kp, float kv, float ki, float _Ts, int method=4, float _limit=0.0, float _kaw=0.0);
 			
 			/// Destructor
 			/** 
@@ -200,7 +200,7 @@ namespace DFILTERS {
 			(1- Euler backward, 2- Euler forward, 3- Tustin, 
 			4- Prewarp Tustin, 5- Zero-order hold, 6- Zero-pole matching)
 			*/
-			bool configure(double kp, double kv, double ki, double _Ts, int method=4, double _limit=0.0, double _kaw=0.0);
+			bool configure(float kp, float kv, float ki, float _Ts, int method=4, float _limit=0.0, float _kaw=0.0);
 			
 			/// Filter update
 			/** 
@@ -208,7 +208,7 @@ namespace DFILTERS {
 			depending on the given current input
 			@param input current filter input
 			*/
-			bool update(double input);
+			bool update(float input);
 			
 			/// Filter finalization
 			/**
@@ -228,97 +228,97 @@ namespace DFILTERS {
 			/// Get numerator of the filter
 			/** @return numerator of the filter as an array pointer
 			*/
-			double* getNumerator ();
+			float* getNumerator ();
 			
 			/// Get denominator of the filter
 			/** @return denominator of the filter as an array pointer
 			*/
-			double* getDenominator ();
+			float* getDenominator ();
 			
 			/// Get previous inputs of the filter
 			/** @return previous inputs of the filter as an array pointer
 			*/
-			double* getPreviousInputs ();
+			float* getPreviousInputs ();
 			
 			/// Get previous outputs of the filter
 			/** @return previous outputs of the filter as an array pointer
 			*/
-			double* getPreviousOutputs ();	
+			float* getPreviousOutputs ();	
 			
 			/// Get current output of the filter
 			/** @return current output of the filter
 			*/
-			double getOutput ();
+			float getOutput ();
 			
 			/// Get current output of the filter with anti-windup
 			/** @return current output of the filter with anti-windup
 			*/
-			double getOutputAntiwindup ();
+			float getOutputAntiwindup ();
 			
-			/// Set the epsilon, value used to denote a number very close to zero (or some other specific value) within the bounds of double accuracy
-			bool setEpsilon(double epsilon);
+			/// Set the epsilon, value used to denote a number very close to zero (or some other specific value) within the bounds of float accuracy
+			bool setEpsilon(float epsilon);
 
 			/// If the controller is close to the target
 			bool isDeadZone();
 
 
-			void setDeadZone(double error);
+			void setDeadZone(float error);
     
 
     		void enableDeadZone(bool enable);
 
-    		double getLimit();
+    		float getLimit();
 
-    		void setLimit(double _limit);
+    		void setLimit(float _limit);
 
 
 			
 		private:
 			/// Denominator (coefficients) of a filter
-			double denominator[filter_order+1];
+			float denominator[filter_order+1];
 			/// Numerator (coefficients) of a filter			
-			double numerator[filter_order+1];
+			float numerator[filter_order+1];
 
 			/// Previous inputs of a filter
-			double previous_inputs[filter_order];
+			float previous_inputs[filter_order];
 			/// Previous outputs of a filter			
-			double previous_outputs[filter_order];
+			float previous_outputs[filter_order];
 			
 			/// Output of a filter
-			double output;
+			float output;
 
 			/// Choice of the discretization method
 			DiscretizationMethod enum_method;
 			
 			/// Sampling time
-			double Ts;
+			float Ts;
 			
-			/// Value used to denote a number very close to zero (or some other specific value) within the bounds of double accuracy [default = 1e-8]
-			double eps;
+			/// Value used to denote a number very close to zero (or some other specific value) within the bounds of float accuracy [default = 1e-8]
+			float eps;
 			
 			/// Anti-windup value, basically an output of anti-windup integrator (which compasates for windup of the integrator integrated in PID filter)
-			double anti_windup;
+			float anti_windup;
 
 			/// Windup value, the difference between saturated and non-saturated value of the output. Also, it is an input to the integrator
-			double windup;
+			float windup;
 			
 			/// Previuos anti-windup value, needed for the implementation of the integrator
-			double previous_antiwindup;
+			float previous_antiwindup;
 
 			/// Previuos windup value, needed for the implementation of the integrator
-			double previous_windup;
+			float previous_windup;
 			
 			/// Output of the PID with anti-windup (saturated)
-			double output_antiwindup;
+			float output_antiwindup;
 			
 			/// Limit of the saturation term, i.e. control input limits
-			double limit;
+			float limit;
 			
 			/// Anti-windup coefficient
-			double kaw;
+			float kaw;
 
 			  // Dead Zone
-  			double deadZone_;
+  			float deadZone_;
  			
  			bool deadZoneEn_;
   			
@@ -329,7 +329,7 @@ namespace DFILTERS {
 			@param in current input
 			@param out current output
 			*/
-			void savePreviousIO(double in, double out);
+			void savePreviousIO(float in, float out);
 			
 			/// Discretization of a filter transfer function
 			/** 
@@ -340,7 +340,7 @@ namespace DFILTERS {
 			@param denCont s-domain denominator
 			@param numCont s-domain numerator
 			*/
-			void cont2discrete(double* denDiscrete, double* numDiscrete, Polynomial &p, Polynomial &q, Polynomial &denCont, Polynomial &numCont);
+			void cont2discrete(float* denDiscrete, float* numDiscrete, Polynomial &p, Polynomial &q, Polynomial &denCont, Polynomial &numCont);
 			
 			/// Normalization of denominator and numerator (coefficients) of a filter discrete-time transfer function, required for implementation
 			/** 
@@ -351,7 +351,7 @@ namespace DFILTERS {
 			@param den discretized (z-domain) denominator (not normalized yet)
 			@param num discretized (z-domain) numerator (not normalized yet)
 			*/
-			bool coefficientNormalization(double* den, double* num);
+			bool coefficientNormalization(float* den, float* num);
 			
 			/// Anti-windup part of PID
 			/** 
