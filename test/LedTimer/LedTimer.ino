@@ -1,10 +1,22 @@
 #define LOGGER_MIN_SEVERITY LOGGER_SEVERITY_INFO
 #include <SerialDXL.h>
+#include <TimerThree.h>  
 
 // LED DXL basic config
 #define LED_MODEL 100
 #define LED_FIRMWARE 100
 #define LED_MMAP_SIZE 3 // Use 3 variables
+
+typedef DeviceDXL<LED_MODEL, LED_FIRMWARE> LedType;
+
+LedType* mainDevice = NULL;
+
+//static inline __attribute__((always_inline))
+void controlLoopUpdate()
+{
+  if (mainDevice == NULL) return;
+  mainDevice->update();
+}
 
 /**
  * @brief LED control using DXL communication protocol
@@ -16,7 +28,7 @@
  * @param reset_pin Pin for reset device
  * @param led_pin LED pin.
  */
-class LedDXL: public DeviceDXL<LED_MODEL, LED_FIRMWARE>
+class LedDXL: public LedType
 {
   public:
     LedDXL(uint8_t dataControlPin, uint8_t reset_pin, uint8_t led_pin):
@@ -65,17 +77,16 @@ class LedDXL: public DeviceDXL<LED_MODEL, LED_FIRMWARE>
 
     void update()
     {
+      mmap_.deserialize();
       //DEBUG_PRINTLN("UPDATE");
       //DEBUG_PRINT("data: ");DEBUG_PRINTLN(command_.data);
-      if (command_.data == 1) digitalWrite(led_pin_, HIGH);
-      else digitalWrite(led_pin_, LOW);
-
-      static uint32_t last_call = 0UL;
-      if(millis()-last_call>1000)
-      {
-        MMap::getFloat(float_.data, float_raw);
-        Serial.println(float_raw,5);
-        last_call = millis();
+      if (command_.data == 0){
+        command_.data = 1;
+        digitalWrite(led_pin_, HIGH);
+      }
+      else {
+        command_.data = 0;
+        digitalWrite(led_pin_, LOW);
       }
     }
 
@@ -112,7 +123,7 @@ class LedDXL: public DeviceDXL<LED_MODEL, LED_FIRMWARE>
 };
 
 
-LedDXL led(4, 30, A0);
+LedDXL led(4, 30, 13);
 SerialDXL<LedDXL> serialDxl;
 
 void setup() {
@@ -127,7 +138,9 @@ void setup() {
   serialDxl.init(&Serial1 ,&led);
 
   pinMode(A1, OUTPUT);
-  
+  mainDevice = &led;
+  Timer3.initialize(500); // 1000 us, 1 khz
+  Timer3.attachInterrupt(controlLoopUpdate);
 }
 
 void loop() {
@@ -136,8 +149,6 @@ void loop() {
     serialDxl.process(Serial1.read());
   }
   
-  led.mmap_.deserialize();
-  led.update();
   led.mmap_.serialize();
   
 }
