@@ -87,30 +87,30 @@ class TorsoDXL: public TorsoType
       DeviceDXL::init();
       mmap_.registerVariable(&goalPosition_);
       mmap_.registerVariable(&movingSpeed_);
-      mmap_.registerVariable(&emergencyState_);
       mmap_.registerVariable(&presentPosition_);
       mmap_.registerVariable(&presentSpeed_);
+      mmap_.registerVariable(&emergencyState_);
       mmap_.registerVariable(&lastPosition_);
+      mmap_.registerVariable(&limits_);
       mmap_.registerVariable(&kp_);
       mmap_.registerVariable(&ki_);
       mmap_.registerVariable(&kv_);
-      mmap_.registerVariable(&limits_);
       mmap_.init();
       /*
        * Control table
        * 
-       * Variable         | Offset | Size |
-       * ----------------------------------
-       * goalPosition_    | 6      | 2    |
-       * movingSpeed_     | 8      | 1    |
-       * emergencyState_  | 9      | 1    |
-       * presentPosition_ | 10     | 4    |
-       * presentSpeed_    | 14     | 2    |
-       * lastPosition_    | 16     | 2    |
-       * kp_              | 18     | 4    |
-       * ki_              | 22     | 4    |
-       * kv_              | 26     | 4    |
-       * limits_          | 30     | 1    |
+       * Variable         | Offset | Size |  Type |
+       * ------------------------------------------
+       * goalPosition_    | 6      | 4    | int32 |
+       * movingSpeed_     | 10     | 1    | int8  |
+       * presentPosition_ | 11     | 4    | int32 |
+       * presentSpeed_    | 15     | 1    | int8  |
+       * emergencyState_  | 16     | 1    | uint8 |
+       * lastPosition_    | 17     | 4    | int32 |
+       * limits_          | 21     | 1    | uint8 |
+       * kp_              | 22     | 4    | float |
+       * ki_              | 26     | 4    | float |
+       * kv_              | 30     | 4    | float |
        * 
        */
 
@@ -190,7 +190,7 @@ class TorsoDXL: public TorsoType
 
           pid_->update(goalPosition_.data - presentPosition_.data);
           hbridge_->set( (int16_t) pid_->getOutputAntiwindup());
-          presentSpeed_.data = (int8_t) pid_->getOutputAntiwindup();
+          //presentSpeed_.data = (int8_t) pid_->getOutputAntiwindup();
           emergencyState_.data = pid_->isDeadZone() ? 0 : 1;
           sm = emergencyState_.data == 1? MOVE : STATE; 
           break;
@@ -228,16 +228,18 @@ class TorsoDXL: public TorsoType
     Fin_de_Carrera *fdc_;
 
     // Torso command
-    MMap::Integer<UInt16, 0, 57600, 0>::type goalPosition_;
-    MMap::Integer<UInt8,  0, 255,   0>::type movingSpeed_;
-    MMap::Integer<Int32,  0, 57600, 0>::type presentPosition_;
-    MMap::Integer<UInt8,  0, 255,   0>::type presentSpeed_;
-    MMap::Integer<UInt16, 0, 57600, 0>::type lastPosition_;
+    MMap::Integer<Int32, 0,    57600,  0>::type goalPosition_;
+    MMap::Integer<Int8,  -127, 127,    0>::type movingSpeed_;
+    MMap::Integer<Int32, 0,    57600,  0>::type presentPosition_;
+    MMap::Integer<Int8,  -127, 127,  -20>::type presentSpeed_;
+    MMap::Integer<UInt8, 0,    1,      0>::type emergencyState_;
+    MMap::Integer<Int32, 0,    57600,  0>::type lastPosition_;
+    MMap::Integer<UInt8, 0,    255, 0>::type limits_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<9,10>   >::type kp_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<15,100> >::type ki_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<15,100> >::type kv_;
-    MMap::Integer<UInt8, 0, 255, 0>::type limits_;
-    MMap::Integer<UInt8, 0, 1,   0>::type emergencyState_;
+    
+    
 
 };
 
@@ -268,7 +270,7 @@ Fin_de_Carrera fdc(FDC1, FDC2, FDC3, FDC4);
 // Torso Controller
 TorsoDXL torso(7, 6, &encoder, &pid, &hbridge, &fdc);
 
-SerialDXL<TorsoDXL> serialDxl;  
+SerialDXL<TorsoDXL> serialDxl;
 
 void setup() {
   Serial.begin(115200);
