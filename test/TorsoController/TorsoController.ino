@@ -104,12 +104,12 @@
        * movingSpeed_     | 8      | 1    |
        * emergencyState_  | 9      | 1    |
        * presentPosition_ | 10     | 4    |
-       * presentSpeed_    | 13     | 2    |
-       * lastPosition_    | 15     | 2    |
-       * kp_              | 17     | 4    |
-       * ki_              | 21     | 4    |
-       * kv_              | 25     | 4    |
-       * limits_          | 29     | 1    |
+       * presentSpeed_    | 14     | 2    |
+       * lastPosition_    | 16     | 2    |
+       * kp_              | 18     | 4    |
+       * ki_              | 22     | 4    |
+       * kv_              | 26     | 4    |
+       * limits_          | 30     | 1    |
        * 
        */
         
