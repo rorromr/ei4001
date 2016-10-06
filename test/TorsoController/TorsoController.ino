@@ -1,10 +1,10 @@
+  #define LOGGER_MIN_SEVERITY LOGGER_SEVERITY_DEBUG
   #include <SerialDXL.h>
   #include <SimpleEncoder.h>
   #include <HBridge.h>
   #include <Fin_de_Carrera.h>
   #include <DPID.h>
   #include "DigitalIO.h"
-  #include <TimerThree.h>
   
   # define MOTOR_PWM_R 9
   # define MOTOR_PWM_L 8
@@ -35,15 +35,8 @@
   
   enum statemachine sm;
   
-
-  DeviceDXL<TORSO_MODEL, TORSO_FIRMWARE>* mainDevice = NULL;
+  typedef DeviceDXL<TORSO_MODEL, TORSO_FIRMWARE> TorsoType;
   
-  //static inline __attribute__((always_inline))
-  void controlLoopUpdate()
-  {
-    if (mainDevice == NULL) return;
-    mainDevice->update();
-  }
   
   /**
    * @brief Torso controller using DXL communication protocol
@@ -54,7 +47,7 @@
    * @param dir_pin Toggle communication pin.
    * @param reset_pin Pin for reset device
    */
-  class TorsoDXL: public DeviceDXL<TORSO_MODEL, TORSO_FIRMWARE>
+  class TorsoDXL: public TorsoType
   {
     public:
       TorsoDXL(uint8_t dir_pin, uint8_t reset_pin, Encoder *encoder, DFILTERS::DPID *pid, HBridge *hbridge, Fin_de_Carrera *fdc):
@@ -102,6 +95,23 @@
         mmap_.registerVariable(&ki_);
         mmap_.registerVariable(&kv_);
         mmap_.registerVariable(&limits_);
+              /*
+       * Control table
+       * 
+       * Variable         | Offset | Size |
+       * ----------------------------------
+       * goalPosition_    | 6      | 2    |
+       * movingSpeed_     | 8      | 1    |
+       * emergencyState_  | 9      | 1    |
+       * presentPosition_ | 10     | 4    |
+       * presentSpeed_    | 13     | 2    |
+       * lastPosition_    | 15     | 2    |
+       * kp_              | 17     | 4    |
+       * ki_              | 21     | 4    |
+       * kv_              | 25     | 4    |
+       * limits_          | 29     | 1    |
+       * 
+       */
         
         
   
@@ -123,11 +133,9 @@
   
       void update()
       {
+        mmap_.deserialize();
         switch (sm) {
           case INIT:
-            noInterrupts();
-            mmap_.deserialize();
-            interrupts();
             sm = CHECK;
             break;
   
@@ -191,20 +199,15 @@
             break;
   
           case STATE:
-            //delay(5);
-            noInterrupts();
-            mmap_.deserialize();
-            interrupts();
             sm = CHECK;
             break;
   
         }
-  
+        mmap_.serialize();
       }
   
       inline bool onReset()
       {
-        DEBUG_PRINTLN("ON RESET");
         return digitalRead(reset_pin_) == HIGH ? true : false;
       }
   
@@ -231,17 +234,15 @@
       MMap::Variable<UInt16, UInt16::type, 0, 57600, 0> goalPosition_;
       MMap::Variable<UInt8, UInt8::type, 0, 255, 0> movingSpeed_;
   
-      MMap::Variable<UInt16, UInt16::type, 0, 57600, 0> presentPosition_;
+      MMap::Variable<Int32, Int32::type, 0, 57600, 0> presentPosition_;
       MMap::Variable<UInt8, UInt8::type, 0, 255, 0> presentSpeed_;
       MMap::Variable<UInt16, UInt16::type, 0, 57600, 0> lastPosition_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kp_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> ki_;
       MMap::Variable<Int32, Int32::type, -1000000, 1000000, 0> kv_;
       MMap::Variable<UInt8, UInt8::type, 0, 255, 0> limits_;
-
       MMap::Variable<UInt8, UInt8::type, 0, 1, 0> emergencyState_;
 
-  
   };
   
   
@@ -274,34 +275,24 @@
   SerialDXL<TorsoDXL> serialDxl;  
   
   void setup() {
-    mainDevice = &torso;
     Serial.begin(115200);
     pin13.mode(OUTPUT);
   
-    // Init serial communication using Dynamixel format
-    serialDxl.init(&Serial3 , &torso);
-  
     torso.init();
     torso.reset();
-    noInterrupts();
     torso.mmap_.serialize();
-    interrupts();
-
-    Timer3.initialize(1000); // 1000 us, 1 khz
-    Timer3.attachInterrupt(controlLoopUpdate);
     
+    // Init serial communication using Dynamixel format
+    serialDxl.init(&Serial3 , &torso);
   }
   
   void loop() {
     // Update msg buffer
-    pin13.high();
+    
     while (Serial3.available())
       serialDxl.process(Serial3.read());
 
-    noInterrupts();
-    torso.mmap_.serialize();
-    interrupts();
+    pin13.high();
+    torso.update();
     pin13.low();
-
-    
   }

@@ -3,6 +3,8 @@
 import sys
 import time
 from dynamixel_driver.dynamixel_io import DynamixelIO
+import struct
+import serial
 
 def test_ping(dxl, dev_id):
     result = None
@@ -24,7 +26,7 @@ def test_read(dxl, dev_id, address):
 
     if result:
         print 'Address %d = %d' % (address, result[5])
-    return result[5]
+    return result
 
 def test_write(dxl, dev_id, address, data):
     result = None
@@ -38,25 +40,84 @@ def test_write(dxl, dev_id, address, data):
         #print 'Response ' + str(result[5])
     return result
 
-def blink(dxl, dev_id):
-    test_write(dxl, 1, 6, 0x00)
-    time.sleep(0.05)
-    test_write(dxl, 1, 6, 0x01)
-    time.sleep(0.05)
+def test_blink(dxl):
+    for i in range(10):
+        dxl.write(1, 6, [0])
+        time.sleep(0.05)
+        dxl.write(1, 6, [1])
+        time.sleep(0.05)
 
-def change_id(dxl, dev_id, target_id):
-    if test_ping(dxl, dev_id):
-        test_write(dxl, dev_id, 3, target_id) # Use ID 5
-        time.sleep(0.1)
-        if test_ping(dxl, target_id):
-            print 'Change ID Successful!'
+def test_change_id(dxl):
+    for i in range(5):
+        print dxl.ping(1)
+        #print "[0FF, 0FF, ID, LEN, ERR]"
+        print dxl.read(1, 0, 7)[5:-2]
+        print dxl.write(1,3,[2])
+        time.sleep(0.5)
+        #print dxl.read(1, 0, 8)[:13]
+        print ''
+        print dxl.read(2, 0, 7)[5:-2]
+        print dxl.write(2,3,[1])
+        time.sleep(0.5)
 
-            
-def main():
-    dxl = DynamixelIO('/dev/ttyUSB0', baudrate = 115200)
-    #change_id(dxl, 5, 1)
+def test_ping(dxl):
+    for i in range(5):
+        print dxl.ping(1)
+
+def serialize_int32(data):
+    return  [ord(a) for a in list(struct.pack('<l',int(data)))]
+
+def deserialize_int32(data):
+    data_bin = struct.pack('B' * len(data), *data)
+    return struct.unpack('<l', data_bin)[0]
+
+def read_position(dxl):
+    i=0
+    t0=time.time()
     while True:
-        blink(dxl,1)
+        try:
+            data = dxl.read(1, 10, 4)[5:-2]
+            print 'Position: {}'.format(deserialize_int32(data))
+        except:
+            i += 1
+            print 'Error packet {} ({})'.format(i,time.time()-t0)
+        finally:
+            time.sleep(0.05)
+          
+def main():
+    dxl = DynamixelIO('/dev/ttyUSB0', baudrate = 1000000)
+    read_position(dxl)
+    # test_ping(dxl)
+    # test_blink(dxl)
+    # target = -900.63
+    # data = serialize_int32(12500)
+    # print data
+    # print deserialize_int32(data)
+    # print data
+    # print dxl.write(1,7,data)
 
+
+   
+
+    # print [b1,b2,b3,b4]
+
+    # print (b1)+(b2<<8)+(b3<<16)+(b4<<24)
+        #time.sleep(0.5)
+
+    #change_id(dxl, 5, 1)
+    # blink(dxl,1)
+    # while True:
+    #     try:
+    #         result = dxl.write(1, 6,[0x01, 0x01])
+    #         result = dxl.read(1, 0, 8)
+    #         print result
+    #         result = dxl.write(1, 6,[0x00, 0x00])
+    #         result = dxl.read(1, 0, 8)
+    #         print result
+    #         time.sleep(0.1)
+    #     except:
+    #         print "asdasd"
+    #         time.sleep(1.0)
+            
 if __name__ == '__main__':
     main()

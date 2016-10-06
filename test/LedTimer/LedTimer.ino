@@ -1,6 +1,5 @@
-#define LOGGER_MIN_SEVERITY LOGGER_SEVERITY_INFO
+#define LOGGER_MIN_SEVERITY LOGGER_SEVERITY_DEBUG
 #include <SerialDXL.h>
-#include <TimerThree.h>  
 
 // LED DXL basic config
 #define LED_MODEL 100
@@ -9,14 +8,6 @@
 
 typedef DeviceDXL<LED_MODEL, LED_FIRMWARE> LedType;
 
-LedType* mainDevice = NULL;
-
-//static inline __attribute__((always_inline))
-void controlLoopUpdate()
-{
-  if (mainDevice == NULL) return;
-  mainDevice->update();
-}
 
 /**
  * @brief LED control using DXL communication protocol
@@ -47,6 +38,10 @@ class LedDXL: public LedType
       // Get mask and port for data control pin
       dataControlPinMask_ = digitalPinToBitMask(dataControlPin);
       dataControlPinReg_ = portOutputRegister(digitalPinToPort(dataControlPin));
+
+      pinMode(A2, OUTPUT);
+      testPinMask_ = digitalPinToBitMask(A2);
+      testPinReg_ = portOutputRegister(digitalPinToPort(A2));
     }
 
     void init()
@@ -77,17 +72,14 @@ class LedDXL: public LedType
 
     void update()
     {
+      *testPinReg_ |= testPinMask_;
+      
       mmap_.deserialize();
-      //DEBUG_PRINTLN("UPDATE");
-      //DEBUG_PRINT("data: ");DEBUG_PRINTLN(command_.data);
-      if (command_.data == 0){
-        command_.data = 1;
-        digitalWrite(led_pin_, HIGH);
-      }
-      else {
-        command_.data = 0;
-        digitalWrite(led_pin_, LOW);
-      }
+      if (command_.data == 1) digitalWrite(led_pin_, HIGH);
+      else digitalWrite(led_pin_, LOW);
+      mmap_.serialize();
+      
+      *testPinReg_ &= ~testPinMask_;
     }
 
     inline bool onReset()
@@ -111,6 +103,10 @@ class LedDXL: public LedType
     uint8_t dataControlPinMask_;
     volatile uint8_t *dataControlPinReg_;
 
+    // Test pin
+    uint8_t testPinMask_;
+    volatile uint8_t *testPinReg_;
+
     const uint8_t reset_pin_; // Reset pin
     const uint8_t led_pin_; // LED pin
     float float_raw;
@@ -123,7 +119,7 @@ class LedDXL: public LedType
 };
 
 
-LedDXL led(4, 30, 13);
+LedDXL led(7, 6, 13);
 SerialDXL<LedDXL> serialDxl;
 
 void setup() {
@@ -135,20 +131,14 @@ void setup() {
   led.mmap_.serialize();
 
   // Init serial communication using Dynamixel format
-  serialDxl.init(&Serial1 ,&led);
-
-  pinMode(A1, OUTPUT);
-  mainDevice = &led;
-  Timer3.initialize(1000000); // 1000 us, 1 khz
-  Timer3.attachInterrupt(controlLoopUpdate);
+  serialDxl.init(&Serial3 ,&led);
 }
 
 void loop() {
   // Update msg buffer
-  while (Serial1.available()){
-    serialDxl.process(Serial1.read());
-  }
-  
-  led.mmap_.serialize();
-  
+  while (Serial3.available())
+  {
+    serialDxl.process(Serial3.read());
+  } 
+  led.update();
 }
