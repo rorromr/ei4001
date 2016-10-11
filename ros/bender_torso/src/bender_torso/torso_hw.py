@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Low level control for torso hardware using Dynamixel fieldbus protocol.
+"""
+__author__ = "Rodrigo Muñoz"
 
 import time
 from dynamixel_driver.dynamixel_io import DynamixelIO
 import struct
-import logging
 
 class TorsoHW(object):
     """
@@ -54,11 +57,11 @@ class TorsoHW(object):
         # Read memory block
         result = self.dxl.read(self.id, TorsoHW.PRESENT_POSITION, 6)
         raw_data = result[5:-2]
-        bin_data = struct.pack('B' * len(raw_data), *raw_data)
+        bin_data = struct.pack('B'*len(raw_data), *raw_data)
         # int32, int8, uint8
         return struct.unpack('<ibB', bin_data)
 
-    def send_position_goal(self, position = 0):
+    def send_position_goal(self, position=0):
         """
         Send position goal.
         :raise Exception: if request fail.
@@ -72,7 +75,7 @@ class TorsoHW(object):
         Serialize int32 datatype into byte list.
         :return: Byte list.
         """
-        return  [ord(a) for a in list(struct.pack('<l',int(data)))]
+        return  [ord(a) for a in list(struct.pack('<l', int(data)))]
 
     @staticmethod
     def deserialize_int32(data):
@@ -80,13 +83,13 @@ class TorsoHW(object):
         Deserialize int32 datatype from byte list.
         :return: Integer obtained from list.
         """
-        data_bin = struct.pack('B' * len(data), *data)
+        data_bin = struct.pack('B'*len(data), *data)
         return struct.unpack('<l', data_bin)[0]
 
 
 if __name__ == '__main__':
-    dxl = DynamixelIO('/dev/bender/dxl_test', baudrate = 1000000)
-    torso = TorsoHW(dxl, dev_id = 1)
+    dxl = DynamixelIO('/dev/bender/dxl_test', baudrate=1000000)
+    torso = TorsoHW(dxl, dev_id=1)
     goal = 0
     while True:
         goal += 1000
