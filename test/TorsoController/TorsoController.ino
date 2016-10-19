@@ -129,7 +129,8 @@ class TorsoDXL: public TorsoType
        * Read sensor data
        * e.g. Use ADC, check buttons, etc.
        */
-      
+      // Set PID Limits
+      pid_->setLimit(limits_.data);
       
     }
 
@@ -141,6 +142,11 @@ class TorsoDXL: public TorsoType
       last_call = micros();
       
       mmap_.deserialize();
+      presentPosition_.data = encoder_->read();
+      pid_->update(goalPosition_.data - presentPosition_.data);
+      hbridge_->set( (int16_t) pid_->getOutputAntiwindup());
+      mmap_.serialize();
+      /*
       switch (sm) {
         case INIT:
           sm = CHECK;
@@ -148,7 +154,7 @@ class TorsoDXL: public TorsoType
 
         case CHECK:
           presentPosition_.data = encoder_->read();
-          pid_->setLimit(limits_.data);
+          
           if (fdc_->getState()) {
             emergencyState_.data = 1;
             sm = ERROR;
@@ -210,7 +216,8 @@ class TorsoDXL: public TorsoType
           break;
 
       }
-      mmap_.serialize();
+      */
+
     }
 
     inline bool onReset()
@@ -238,13 +245,13 @@ class TorsoDXL: public TorsoType
     Fin_de_Carrera *fdc_;
 
     // Torso command
-    MMap::Integer<Int32, 0,    57600,  0>::type goalPosition_;
-    MMap::Integer<Int8,  -127, 127,    0>::type movingSpeed_;
-    MMap::Integer<Int32, 0,    57600,  0>::type presentPosition_;
-    MMap::Integer<Int8,  -127, 127,  -20>::type presentSpeed_;
-    MMap::Integer<UInt8, 0,    1,      0>::type emergencyState_;
-    MMap::Integer<Int32, 0,    57600,  0>::type lastPosition_;
-    MMap::Integer<UInt8, 0,    255, 0>::type limits_;
+    MMap::Integer<Int32,-100000,100000, 0>::type goalPosition_;
+    MMap::Integer<Int8,  -127,  127,    0>::type movingSpeed_;
+    MMap::Integer<Int32,-100000,100000, 0>::type presentPosition_;
+    MMap::Integer<Int8,  -127,  127,   -20>::type presentSpeed_;
+    MMap::Integer<UInt8, 0,     1,      0>::type emergencyState_;
+    MMap::Integer<Int32, 0,     57600,  0>::type lastPosition_;
+    MMap::Integer<UInt8, 0,     255,    0>::type limits_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<9,10>   >::type kp_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<15,100> >::type ki_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<15,100> >::type kv_;
