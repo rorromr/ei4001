@@ -7,7 +7,7 @@
 #include "DigitalIO.h"
 
 # define MOTOR_PWM_R 9
-# define MOTOR_PWM_L 8
+# define MOTOR_PWM_L 10
 # define ENCODER_A 2
 # define ENCODER_B 4
 # define FDC1 28
@@ -69,16 +69,19 @@ class TorsoDXL: public TorsoType
       limits_(MMap::Access::RW, MMap::Storage::RAM),
       emergencyState_(MMap::Access::R, MMap::Storage::RAM)
     {
-      // Config pins
-      pinMode(dir_pin_, OUTPUT);
-      pinMode(reset_pin_, OUTPUT);
-      //hbridge_->setPwmFrequency(64);
+      // PID Config
       pid_->setDeadZone(30);
       pid_->enableDeadZone(true);
+      
     }
 
     void init()
     {
+      // Config pins
+      pinMode(dir_pin_, OUTPUT);
+      pinMode(reset_pin_, OUTPUT);
+      // Config PWM to 4 Khz
+      hbridge_->setPwmFrequency(2);
       
       DEBUG_PRINTLN("INIT");
       /*
@@ -126,10 +129,17 @@ class TorsoDXL: public TorsoType
        * Read sensor data
        * e.g. Use ADC, check buttons, etc.
        */
+      
+      
     }
 
     void update()
     {
+      static uint32_t last_call = 0UL;
+      if (micros()-last_call<1000)
+        return;
+      last_call = micros();
+      
       mmap_.deserialize();
       switch (sm) {
         case INIT:
@@ -245,10 +255,10 @@ class TorsoDXL: public TorsoType
 
 
 //New PID
-float kp = 2.0;
-float kv = 0.40;
-float ki = 0.15;
-float Ts = 0.005;
+float kp = 1.0;
+float kv = 0.01;//0.08;
+float ki = 0.00;//0.1;
+float Ts = 0.001;
 int discretization_method = 4;
 float limit = 255;
 float kaw = sqrt(ki*kv);
