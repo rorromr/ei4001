@@ -61,6 +61,16 @@ class TorsoHW(object):
         # int32, int8, uint8
         return struct.unpack('<ibB', bin_data)
 
+    def get_emergency_state(self):
+        """
+        Get emergency state of torso.
+        :raise Exception: if request fail.
+        :return: Tuple with present position, present speed and emergency state.
+        """
+        # Read memory block
+        result = self.dxl.read(self.id, TorsoHW.EMERGENCY_STATE, 1)
+        return result[5:-2][0]
+
     def send_position_goal(self, position=0):
         """
         Send position goal.

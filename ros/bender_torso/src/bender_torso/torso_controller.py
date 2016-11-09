@@ -63,6 +63,9 @@ class TorsoController:
         error_count = 0
         while self.running and not rospy.is_shutdown():
             try:
+                #self.torso.get_emergency_state()
+                # if not self.torso.ping():
+                #     raise Exception("Ping fail")
                 current_state = self.torso.get_state()
             except Exception:
                 error_count += 1

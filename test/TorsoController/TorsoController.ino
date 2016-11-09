@@ -23,7 +23,7 @@
 #define TORSO_FIRMWARE 100
 #define TORSO_MMAP_SIZE 10
 
-DigitalPin<A0> pin13;
+DigitalPin<13> pin13;
 
 enum statemachine {
   INIT,
@@ -140,12 +140,14 @@ class TorsoDXL: public TorsoType
       if (micros()-last_call<1000)
         return;
       last_call = micros();
-      
+
+      pin13.high();
       mmap_.deserialize();
       presentPosition_.data = encoder_->read();
       pid_->update(goalPosition_.data - presentPosition_.data);
       hbridge_->set( (int16_t) pid_->getOutputAntiwindup());
       mmap_.serialize();
+      pin13.low();
       /*
       switch (sm) {
         case INIT:
@@ -255,13 +257,9 @@ class TorsoDXL: public TorsoType
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<9,10>   >::type kp_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<15,100> >::type ki_;
     MMap::Float<ConstRatio<0,1>, ConstRatio<1000,1>, ConstRatio<15,100> >::type kv_;
-    
-    
-
 };
 
-
-//New PID
+// PID constants
 float kp = 1.0;
 float kv = 0.01;//0.08;
 float ki = 0.00;//0.1;
@@ -271,11 +269,10 @@ float limit = 255;
 float kaw = sqrt(ki*kv);
   
 
-//controlador
-
+// Controller
 DFILTERS::DPID pid(kp, kv, ki, Ts, discretization_method, limit, kaw);
 
-//Clase encoder
+// Encoder
 Encoder encoder(ENCODER_A, ENCODER_B);
 
 // H bridge class
@@ -307,7 +304,6 @@ void loop() {
   while (Serial3.available())
     serialDxl.process(Serial3.read());
 
-  pin13.high();
+  
   torso.update();
-  pin13.low();
 }
